@@ -130,6 +130,11 @@
                                         </td>
                                         <td>{{ $branch->created_at->format('d M Y h:i A') }}</td>
                                         <td>
+                                            <a href="#" class="btn btn-sm btn-secondary" data-bs-toggle="modal"
+                                                data-bs-target="#permissionModal" data-user-id="{{ $branch->id }}">
+                                                <i class="fa-solid fa-gear"></i>
+                                            </a>
+
                                             <a href="javascript:void(0);" class="btn btn-sm btn-primary editBranchBtn"
                                                 data-id="{{ $branch->id }}" data-name="{{ $branch->name }}"
                                                 data-email="{{ $branch->email }}" data-phone="{{ $branch->phone }}"
@@ -270,9 +275,72 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="permissionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Module Permissions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="permissionForm">
+                @csrf
+                <input type="hidden" name="user_id" id="permission_user_id">
+
+                <div class="modal-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Module</th>
+                                <th>View</th>
+                                <th>Edit</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (['tagging', 'announcement'] as $module)
+                                <tr>
+                                    <td>{{ ucfirst($module) }}</td>
+                                    <td><input type="checkbox" name="permissions[{{ $module }}][view]"></td>
+                                    <td><input type="checkbox" name="permissions[{{ $module }}][edit]"></td>
+                                    <td><input type="checkbox" name="permissions[{{ $module }}][delete]"></td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-primary" type="submit">Save Permissions</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
 <script src="{{ asset('assets/libs/simple-datatables/umd/simple-datatables.js') }}"></script>
 <script src="{{ asset('assets/js/pages/datatable.init.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('permissionModal');
+
+        modal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const userId = button.getAttribute('data-user-id');
+
+            document.getElementById('permission_user_id').value = userId;
+
+            // OPTIONAL: Load existing permissions via AJAX
+            // fetch(`/admin/permissions/${userId}`)
+        });
+    });
+</script>
+
+
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const Toast = Swal.mixin({

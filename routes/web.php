@@ -27,6 +27,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/branches', [BranchController::class, 'index'])->name('admin.branches');
     Route::post('/admin/branches/{branch}', [BranchController::class, 'update'])->name('branches.update');
     Route::delete('/admin/branches/{branch}', [BranchController::class, 'destroy'])->name('branches.destroy');
+    Route::post('/admin/users/permissions', [BranchController::class, 'storePermissions'])
+        ->name('admin.permissions.store');
     // Announcement Routes
     Route::get('/admin/announcements', [AnnouncementController::class, 'index'])->name('admin.announcements');
     Route::get('/admin/announcements/create', [AnnouncementController::class, 'create'])->name('admin.announcements.create');

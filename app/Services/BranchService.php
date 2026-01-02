@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class BranchService
@@ -46,5 +47,19 @@ class BranchService
         }
 
         return $query->latest()->get();
+    }
+
+    public function save($userId, $modules)
+    {
+        foreach ($modules as $moduleId => $actions) {
+            DB::table('module_user_permissions')->updateOrInsert(
+                ['user_id' => $userId, 'module_id' => $moduleId],
+                [
+                    'can_view' => isset($actions['view']),
+                    'can_edit' => isset($actions['edit']),
+                    'can_delete' => isset($actions['delete']),
+                ]
+            );
+        }
     }
 }

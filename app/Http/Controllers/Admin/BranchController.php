@@ -67,4 +67,10 @@ class BranchController extends Controller
             ], 500);
         }
     }
+
+    public function storePermissions(Request $request, BranchService $service)
+    {
+        $service->save($request->user_id, $request->modules ?? []);
+        return back()->with('status', 'permissions-updated');
+    }
 }
