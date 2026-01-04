@@ -4,6 +4,15 @@
 @php
     $currentStatus = request('status');
 @endphp
+@php
+    $canView = auth()->user()->canAccess('tagging', 'view');
+    $canCreate = auth()->user()->canAccess('tagging', 'create');
+    $canEdit = auth()->user()->canAccess('tagging', 'edit');
+    $canDelete = auth()->user()->canAccess('tagging', 'delete');
+
+    // Should we show the Action column at all?
+    $hasActions = $canEdit || $canDelete || auth()->user()->isAdmin();
+@endphp
 <link href="{{ asset('assets/libs/simple-datatables/style.css') }}" rel="stylesheet" type="text/css" />
 <div class="container-fluid">
     <div class="row">
@@ -61,12 +70,14 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-auto">
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                        data-bs-target="#addTagging">
-                                        <i class="fa-solid fa-plus me-1"></i> Add Tagging
-                                    </button>
-                                </div>
+                                @if ($canCreate)
+                                    <div class="col-auto">
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                            data-bs-target="#addTagging">
+                                            <i class="fa-solid fa-plus me-1"></i> Add Tagging
+                                        </button>
+                                    </div>
+                                @endif
                             </form>
                         </div>
                     </div>
@@ -82,7 +93,9 @@
                                     <th class="ps-0">Source</th>
                                     <th>Tagging</th>
                                     <th>Refrence Link</th>
-                                    <th>Action</th>
+                                    @if ($hasActions)
+                                        <th>Action</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -114,23 +127,34 @@
                                                 -
                                             @endif
                                         </td>
-                                        <td>
-                                            <a href="javascript:void(0)" class="btn btn-sm btn-primary editTaggingBtn"
-                                                data-id="{{ $tagging->id }}" data-source="{{ $tagging->source }}"
-                                                data-status="{{ $tagging->status }}"
-                                                data-ref_url="{{ $tagging->ref_url }}">
-                                                <i class="fa-solid fa-pen-to-square"></i>
-                                            </a>
-                                            <form action="{{ route('admin.tagging.delete', $tagging->id) }}"
-                                                method="POST" class="d-inline delete-form">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger delete-btn"
-                                                    data-bs-toggle="tooltip" title="Delete">
-                                                    <i class="fa-solid fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </td>
+                                        @if ($hasActions)
+                                            <td>
+                                                {{-- Edit button --}}
+                                                @if ($canEdit)
+                                                    <a href="javascript:void(0)"
+                                                        class="btn btn-sm btn-primary editTaggingBtn"
+                                                        data-id="{{ $tagging->id }}"
+                                                        data-source="{{ $tagging->source }}"
+                                                        data-status="{{ $tagging->status }}"
+                                                        data-ref_url="{{ $tagging->ref_url }}">
+                                                        <i class="fa-solid fa-pen-to-square"></i>
+                                                    </a>
+                                                @endif
+
+                                                {{-- Delete button --}}
+                                                @if ($canDelete)
+                                                    <form action="{{ route('admin.tagging.delete', $tagging->id) }}"
+                                                        method="POST" class="d-inline delete-form">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-danger delete-btn"
+                                                            data-bs-toggle="tooltip" title="Delete">
+                                                            <i class="fa-solid fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </td>
+                                        @endif
                                     </tr>
                                 @empty
                                     <tr>

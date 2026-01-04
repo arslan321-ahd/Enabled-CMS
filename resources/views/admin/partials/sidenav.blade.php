@@ -1,3 +1,6 @@
+@php
+    use App\Helpers\PermissionHelper;
+@endphp
 <div class="startbar d-print-none">
     <div class="brand">
         <a href="{{ route('dashboard') }}" class="logo">
@@ -13,71 +16,82 @@
     <div class="startbar-menu">
         <div class="startbar-collapse" id="startbarCollapse" data-simplebar>
             <div class="d-flex align-items-start flex-column w-100">
+
                 <ul class="navbar-nav mb-auto w-100">
                     <li class="menu-label mt-2">
                         <span>Navigation</span>
                     </li>
+
+                    {{-- Dashboard (usually visible to all authenticated users) --}}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('dashboard') }}">
                             <i class="iconoir-report-columns menu-icon"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.customers.list') }}">
-                            <i class="iconoir-community menu-icon"></i>
-                            <span>Customers List</span>
-                        </a>
-                    </li>
+
+                    {{-- Customers --}}
+                    @if (auth()->user()->canAccess('tagging', 'view'))
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('admin.customers.list') }}">
+                                <i class="iconoir-community menu-icon"></i>
+                                <span>Customers List</span>
+                            </a>
+                        </li>
+                    @endif
+
+                    {{-- Calendar (no permission applied yet) --}}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('admin.calender') }}">
                             <i class="iconoir-calendar menu-icon"></i>
                             <span>Calendar</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.branches') }}">
-                            <i class="iconoir-hexagon-dice menu-icon"></i>
-                            <span>Branches</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.tagging.list') }}">
-                            <i class="iconoir-label menu-icon"></i>
-                            <span>Tagging</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#sidebarAnalytics" data-bs-toggle="collapse" role="button"
-                            aria-expanded="false" aria-controls="sidebarAnalytics">
-                            <i class="iconoir-bell menu-icon"></i>
-                            <span>Announcements</span>
-                            <span class="badge text-bg-warning ms-auto">08</span>
-                        </a>
-                        <div class="collapse " id="sidebarAnalytics">
-                            <ul class="nav flex-column">
-                                <li class="nav-item">
-                                    <a href="{{ route('admin.announcements') }}" class="nav-link ">Announcements
-                                        List</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{{ route('admin.announcements.create') }}" class="nav-link ">Post
-                                        Announcement</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                            @csrf
-                            <a class="nav-link" href="{{ route('logout') }}"
-                                onclick="event.preventDefault(); this.closest('form').submit();">
-                                <i class="iconoir-log-out menu-icon"></i>
-                                <span>Sign Out</span>
+                    @if (auth()->user()->canAccess('branches', 'view'))
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('admin.branches') }}">
+                                <i class="iconoir-hexagon-dice menu-icon"></i>
+                                <span>Branches</span>
                             </a>
-                        </form>
+                        </li>
+                    @endif
+                    @if (auth()->user()->canAccess('tagging', 'view'))
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('admin.tagging.list') }}">
+                                <i class="iconoir-label menu-icon"></i>
+                                <span>Tagging</span>
+                            </a>
+                        </li>
+                    @endif
+                    @if (auth()->user()->canAccess('announcement', 'view'))
+                        <li class="nav-item">
+                            <a class="nav-link" href="#sidebarAnnouncements" data-bs-toggle="collapse" role="button"
+                                aria-expanded="false" aria-controls="sidebarAnnouncements">
+                                <i class="iconoir-bell menu-icon"></i>
+                                <span>Announcements</span>
+                            </a>
 
-                    </li>
+                            <div class="collapse" id="sidebarAnnouncements">
+                                <ul class="nav flex-column">
+
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.announcements') }}" class="nav-link">
+                                            Announcements List
+                                        </a>
+                                    </li>
+
+                                    @if (auth()->user()->canAccess('announcement', 'create'))
+                                        <li class="nav-item">
+                                            <a href="{{ route('admin.announcements.create') }}" class="nav-link">
+                                                Post Announcement
+                                            </a>
+                                        </li>
+                                    @endif
+
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
                 </ul>
             </div>
         </div>

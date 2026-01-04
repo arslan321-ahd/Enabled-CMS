@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Module;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -51,15 +52,40 @@ class BranchService
 
     public function save($userId, $modules)
     {
+        DB::table('module_user_permissions')
+            ->where('user_id', $userId)
+            ->delete();
+
+        if (empty($modules)) {
+            return;
+        }
+
+        $permissionsToInsert = [];
+
         foreach ($modules as $moduleId => $actions) {
-            DB::table('module_user_permissions')->updateOrInsert(
-                ['user_id' => $userId, 'module_id' => $moduleId],
-                [
-                    'can_view' => isset($actions['view']),
-                    'can_edit' => isset($actions['edit']),
-                    'can_delete' => isset($actions['delete']),
-                ]
-            );
+            $moduleId = (int) $moduleId;
+
+            $hasView   = !empty($actions['view'])   && $actions['view'] == '1';
+            $hasCreate = !empty($actions['create']) && $actions['create'] == '1';
+            $hasEdit   = !empty($actions['edit'])   && $actions['edit'] == '1';
+            $hasDelete = !empty($actions['delete']) && $actions['delete'] == '1';
+
+            if ($hasView || $hasCreate || $hasEdit || $hasDelete) {
+                $permissionsToInsert[] = [
+                    'user_id'    => $userId,
+                    'module_id'  => $moduleId,
+                    'can_view'   => $hasView,
+                    'can_create' => $hasCreate,
+                    'can_edit'   => $hasEdit,
+                    'can_delete' => $hasDelete,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        }
+
+        if (!empty($permissionsToInsert)) {
+            DB::table('module_user_permissions')->insert($permissionsToInsert);
         }
     }
 }

@@ -13,12 +13,14 @@ return new class extends Migration
     {
         Schema::create('module_user_permissions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('module_id')->constrained()->cascadeOnDelete();
-            $table->boolean('can_view')->default(0);
-            $table->boolean('can_edit')->default(0);
-            $table->boolean('can_delete')->default(0);
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('module_id')->constrained()->onDelete('cascade');
+            $table->boolean('can_view')->default(false);
+            $table->boolean('can_create')->default(false);
+            $table->boolean('can_edit')->default(false);
+            $table->boolean('can_delete')->default(false);
             $table->timestamps();
+
             $table->unique(['user_id', 'module_id']);
         });
     }

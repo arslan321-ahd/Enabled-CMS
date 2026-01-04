@@ -2,6 +2,13 @@
 @section('content')
 @section('title', 'Distribution List')
 <link href="{{ asset('assets/libs/simple-datatables/style.css') }}" rel="stylesheet" type="text/css" />
+@php
+    $canEdit = auth()->user()->canAccess('branches', 'edit');
+    $canDelete = auth()->user()->canAccess('branches', 'delete');
+    $canCreate = auth()->user()->canAccess('branches', 'create'); // optional for create buttons
+    $hasActions = $canEdit || $canDelete || auth()->user()->isAdmin(); // include admin
+@endphp
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-sm-12">
@@ -57,12 +64,14 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-auto">
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                        data-bs-target="#addBranch">
-                                        <i class="fa-solid fa-plus me-1"></i> Add Branch
-                                    </button>
-                                </div>
+                                @if (auth()->user()->canAccess('branches', 'create'))
+                                    <div class="col-auto">
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                            data-bs-target="#addBranch">
+                                            <i class="fa-solid fa-plus me-1"></i> Add Branch
+                                        </button>
+                                    </div>
+                                @endif
                             </form>
                         </div><!--end col-->
                     </div><!--end row-->
@@ -81,7 +90,9 @@
                                     <th>Status</th>
                                     <th>Role</th>
                                     <th>Created At</th>
-                                    <th>Action</th>
+                                    @if ($hasActions)
+                                        <th>Action</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -130,28 +141,43 @@
                                         </td>
                                         <td>{{ $branch->created_at->format('d M Y h:i A') }}</td>
                                         <td>
-                                            <a href="#" class="btn btn-sm btn-secondary" data-bs-toggle="modal"
-                                                data-bs-target="#permissionModal" data-user-id="{{ $branch->id }}">
-                                                <i class="fa-solid fa-gear"></i>
-                                            </a>
 
-                                            <a href="javascript:void(0);" class="btn btn-sm btn-primary editBranchBtn"
-                                                data-id="{{ $branch->id }}" data-name="{{ $branch->name }}"
-                                                data-email="{{ $branch->email }}" data-phone="{{ $branch->phone }}"
-                                                data-role="{{ $branch->role }}" data-status="{{ $branch->status }}"
-                                                data-bs-toggle="modal" data-bs-target="#editBranchModal" title="Edit">
-                                                <i class="fa-solid fa-pen-to-square"></i>
-                                            </a>
-                                            <form action="{{ route('branches.destroy', $branch->id) }}" method="POST"
-                                                class="d-inline-block delete-form">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
-                                                    <i class="fa-solid fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            {{-- Settings (ADMIN ONLY) --}}
+                                            @if (auth()->user()->isAdmin())
+                                                <a href="#" class="btn btn-sm btn-secondary"
+                                                    data-bs-toggle="modal" data-bs-target="#permissionModal"
+                                                    data-user-id="{{ $branch->id }}">
+                                                    <i class="fa-solid fa-gear"></i>
+                                                </a>
+                                            @endif
+
+                                            {{-- Edit --}}
+                                            @if (auth()->user()->canAccess('branches', 'edit'))
+                                                <a href="javascript:void(0);"
+                                                    class="btn btn-sm btn-primary editBranchBtn"
+                                                    data-id="{{ $branch->id }}" data-name="{{ $branch->name }}"
+                                                    data-email="{{ $branch->email }}"
+                                                    data-phone="{{ $branch->phone }}" data-role="{{ $branch->role }}"
+                                                    data-status="{{ $branch->status }}" data-bs-toggle="modal"
+                                                    data-bs-target="#editBranchModal">
+                                                    <i class="fa-solid fa-pen-to-square"></i>
+                                                </a>
+                                            @endif
+
+                                            {{-- Delete --}}
+                                            @if (auth()->user()->canAccess('branches', 'delete'))
+                                                <form action="{{ route('branches.destroy', $branch->id) }}"
+                                                    method="POST" class="d-inline-block delete-form">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-danger">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+
                                         </td>
+
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -283,33 +309,65 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
-            <form id="permissionForm">
+            <form id="permissionForm" action="{{ route('admin.permissions.store') }}" method="POST">
                 @csrf
                 <input type="hidden" name="user_id" id="permission_user_id">
 
                 <div class="modal-body">
-                    <table class="table">
+                    <div id="permissionsLoading" class="text-center d-none">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading permissions...</p>
+                    </div>
+
+                    <table class="table" id="permissionsTable">
                         <thead>
                             <tr>
                                 <th>Module</th>
                                 <th>View</th>
+                                <th>Create</th>
                                 <th>Edit</th>
                                 <th>Delete</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @foreach (['tagging', 'announcement'] as $module)
-                                <tr>
-                                    <td>{{ ucfirst($module) }}</td>
-                                    <td><input type="checkbox" name="permissions[{{ $module }}][view]"></td>
-                                    <td><input type="checkbox" name="permissions[{{ $module }}][edit]"></td>
-                                    <td><input type="checkbox" name="permissions[{{ $module }}][delete]"></td>
+                        <tbody id="permissionsTableBody">
+                            @foreach ($modules as $module)
+                                <tr data-module-id="{{ $module->id }}">
+                                    <td>{{ ucfirst($module->name) }}</td>
+                                    <td>
+                                        <input type="hidden" name="modules[{{ $module->id }}][view]"
+                                            value="0">
+                                        <input type="checkbox" name="modules[{{ $module->id }}][view]"
+                                            value="1" class="perm-checkbox"
+                                            id="module_{{ $module->id }}_view">
+                                    </td>
+                                    <td>
+                                        <input type="hidden" name="modules[{{ $module->id }}][create]"
+                                            value="0">
+                                        <input type="checkbox" name="modules[{{ $module->id }}][create]"
+                                            value="1" class="perm-checkbox"
+                                            id="module_{{ $module->id }}_create">
+                                    </td>
+                                    <td>
+                                        <input type="hidden" name="modules[{{ $module->id }}][edit]"
+                                            value="0">
+                                        <input type="checkbox" name="modules[{{ $module->id }}][edit]"
+                                            value="1" class="perm-checkbox"
+                                            id="module_{{ $module->id }}_edit">
+                                    </td>
+                                    <td>
+                                        <input type="hidden" name="modules[{{ $module->id }}][delete]"
+                                            value="0">
+                                        <input type="checkbox" name="modules[{{ $module->id }}][delete]"
+                                            value="1" class="perm-checkbox"
+                                            id="module_{{ $module->id }}_delete">
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-
                 <div class="modal-footer">
                     <button class="btn btn-primary" type="submit">Save Permissions</button>
                 </div>
@@ -317,6 +375,9 @@
         </div>
     </div>
 </div>
+
+<!-- Add this hidden div to pass modules data -->
+<div id="modulesData" data-modules='@json($modules)' style="display: none;"></div>
 
 
 
@@ -326,19 +387,165 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('permissionModal');
+        const permissionForm = document.getElementById('permissionForm');
+        const permissionsLoading = document.getElementById('permissionsLoading');
+        const permissionsTable = document.getElementById('permissionsTable');
+
+        // Store original form HTML to reset
+        const originalTableHTML = document.getElementById('permissionsTableBody').innerHTML;
 
         modal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const userId = button.getAttribute('data-user-id');
+            const userName = button.closest('tr').querySelector('.font-13.fw-medium')?.textContent ||
+                'User';
 
+            // Update modal title
+            modal.querySelector('.modal-title').textContent = `Permissions for ${userName}`;
+
+            // Set user ID in form
             document.getElementById('permission_user_id').value = userId;
 
-            // OPTIONAL: Load existing permissions via AJAX
-            // fetch(`/admin/permissions/${userId}`)
+            // Reset table to original state
+            document.getElementById('permissionsTableBody').innerHTML = originalTableHTML;
+
+            // Hide table, show loading
+            permissionsTable.classList.add('d-none');
+            permissionsLoading.classList.remove('d-none');
+
+            // Load permissions
+            loadUserPermissions(userId);
+        });
+
+        function loadUserPermissions(userId) {
+            fetch(`/admin/users/${userId}/permissions`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(permissions => {
+                    // Hide loading, show table
+                    permissionsLoading.classList.add('d-none');
+                    permissionsTable.classList.remove('d-none');
+
+                    // Reset all checkboxes first (in case of previous state)
+                    document.querySelectorAll('.perm-checkbox').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+
+                    // Set checkboxes based on permissions
+                    if (permissions && typeof permissions === 'object') {
+                        Object.keys(permissions).forEach(moduleId => {
+                            const perms = permissions[moduleId];
+
+                            // Find checkboxes by ID (more reliable than name)
+                            const viewCheckbox = document.getElementById(`module_${moduleId}_view`);
+                            const createCheckbox = document.getElementById(
+                                `module_${moduleId}_create`);
+                            const editCheckbox = document.getElementById(`module_${moduleId}_edit`);
+                            const deleteCheckbox = document.getElementById(
+                                `module_${moduleId}_delete`);
+
+                            if (viewCheckbox) viewCheckbox.checked = Boolean(perms.can_view);
+                            if (createCheckbox) createCheckbox.checked = Boolean(perms.can_create);
+                            if (editCheckbox) editCheckbox.checked = Boolean(perms.can_edit);
+                            if (deleteCheckbox) deleteCheckbox.checked = Boolean(perms.can_delete);
+                        });
+                    }
+                })
+                .catch(error => {
+                    // Hide loading, show table even if error
+                    permissionsLoading.classList.add('d-none');
+                    permissionsTable.classList.remove('d-none');
+
+                    // Show error toast
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Could not load existing permissions. You can still set new permissions.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                });
+        }
+
+        // Handle form submission
+        permissionForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML =
+                '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+            submitBtn.disabled = true;
+
+            const formData = new FormData(this);
+
+            fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.message || 'Failed to save');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: data.message || 'Permissions saved successfully!',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+
+                        // Close modal after delay
+                        setTimeout(() => {
+                            const modalInstance = bootstrap.Modal.getInstance(modal);
+                            if (modalInstance) modalInstance.hide();
+                        }, 1000);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to save permissions'
+                        });
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'Something went wrong. Please try again.'
+                    });
+                })
+                .finally(() => {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
+        });
+
+        // When modal hides, reset everything
+        modal.addEventListener('hidden.bs.modal', function() {
+            permissionsLoading.classList.add('d-none');
+            permissionsTable.classList.remove('d-none');
         });
     });
 </script>
-
 
 
 <script>

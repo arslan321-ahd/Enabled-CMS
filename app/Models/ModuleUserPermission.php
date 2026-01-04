@@ -9,6 +9,7 @@ class ModuleUserPermission extends Model
     protected $fillable = [
         'user_id',
         'module_id',
+        'can_create',
         'can_view',
         'can_edit',
         'can_delete',
