@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\DynamicFormController;
 use App\Http\Controllers\Admin\FormBuilderController;
 use App\Http\Controllers\Admin\TaggingController;
@@ -62,7 +63,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/forms/{form}', [DynamicFormController::class, 'show'])->name('forms.show');
     Route::post('/my-form', [DynamicFormController::class, 'submit'])->name('forms.submit');
     // Brands Routes
-
+    Route::prefix('/admin')->name('admin.')->group(function () {
+        Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
+        Route::post('/brands', [BrandController::class, 'store'])->name('brands.store');
+        Route::get('/brands/{brand}/edit', [BrandController::class, 'edit'])->name('brands.edit');
+        Route::put('/brands/{brand}', [BrandController::class, 'update'])->name('brands.update');
+        Route::delete('/brands/{brand}', [BrandController::class, 'destroy'])->name('brands.destroy');
+    });
 });
 // Website Routes
 Route::view('/', 'user.customer_form')->name('customer.form');
