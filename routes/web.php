@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\DynamicFormController;
+use App\Http\Controllers\Admin\FormBuilderController;
 use App\Http\Controllers\Admin\TaggingController;
 use App\Http\Controllers\ProfileController;
+use App\Models\Announcement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -13,34 +16,54 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::middleware(['auth', 'verified', 'permissions'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('/admin/dashboard', 'admin.dashboard')->name('dashboard');
-    Route::view('/admin/add-customer', 'admin.customers.add_customer')->name('admin.customers.add');
+    Route::view('', 'admin.customers.add_customer')->name('admin.customers.add');
     Route::view('/admin/customers-list', 'admin.customers.customer_list')->name('admin.customers.list');
     Route::view('/admin/calender', 'admin.calender.calender')->name('admin.calender');
-    // Tagging Routes
-    Route::get('/admin/tagging', [TaggingController::class, 'index'])->name('admin.tagging.list');
-    Route::post('taggings-store', [TaggingController::class, 'store'])->name('taggings.store');
-    Route::put('taggings-update/{tagging}', [TaggingController::class, 'update'])->name('taggings.update');
-    Route::delete('/admin/tagging/{tagging}/delete', [TaggingController::class, 'destroy'])->name('admin.tagging.delete');
     // Branches Routes
-    Route::post('/admin/branches', [BranchController::class, 'store'])->name('admin.branches.store');
-    Route::get('/admin/branches', [BranchController::class, 'index'])->name('admin.branches');
-    Route::post('/admin/branches/{branch}', [BranchController::class, 'update'])->name('branches.update');
-    Route::delete('/admin/branches/{branch}', [BranchController::class, 'destroy'])->name('branches.destroy');
+    Route::get('/admin/branches', [BranchController::class, 'index'])->middleware('permission:branches,view')
+        ->name('admin.branches');
+    Route::post('/admin/branches', [BranchController::class, 'store'])->middleware('permission:branches,create')
+        ->name('admin.branches.store');
+    Route::post('/admin/branches/{branch}', [BranchController::class, 'update'])->middleware('permission:branches,edit')
+        ->name('branches.update');
+    Route::delete('/admin/branches/{branch}', [BranchController::class, 'destroy'])->middleware('permission:branches,delete')
+        ->name('branches.destroy');
     Route::post('/admin/users/permissions', [BranchController::class, 'storePermissions'])->name('admin.permissions.store');
     Route::get('/admin/users/{user}/permissions', [BranchController::class, 'getPermissions'])->name('admin.permissions.get');
     // Announcements Routes
-    Route::get('/admin/announcements', [AnnouncementController::class, 'index'])->name('admin.announcements');
-    Route::get('/admin/announcements/create', [AnnouncementController::class, 'create'])->name('admin.announcements.create');
-    Route::post('/admin/announcements', [AnnouncementController::class, 'store'])->name('admin.announcements.store');
-    Route::get('announcements/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
-    Route::get('admin/announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->name('announcements.edit');
-    Route::put('admin/announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');
-    Route::delete('admin/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+    Route::get('/admin/announcements', [AnnouncementController::class, 'index'])->middleware('permission:announcement,view')
+        ->name('admin.announcements');
+    Route::get('/admin/announcements/create', [AnnouncementController::class, 'create'])->middleware('permission:announcement,create')
+        ->name('admin.announcements.create');
+    Route::post('/admin/announcements', [AnnouncementController::class, 'store'])->middleware('permission:announcement,create')
+        ->name('admin.announcements.store');
+    Route::get('announcements/{announcement}', [AnnouncementController::class, 'show'])->middleware('permission:announcement,view')
+        ->name('announcements.show');
+    Route::get('/admin/announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->middleware('permission:announcement,edit')
+        ->name('announcements.edit');
+    Route::put('/admin/announcements/{announcement}', [AnnouncementController::class, 'update'])->middleware('permission:announcement,edit')
+        ->name('announcements.update');
+    Route::delete('/admin/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->middleware('permission:announcement,delete')
+        ->name('announcements.destroy');
+    // Taggings Routes
+    Route::get('/admin/tagging', [TaggingController::class, 'index'])->middleware('permission:tagging,view')
+        ->name('admin.tagging.list');
+    Route::post('/admin/tagging', [TaggingController::class, 'store'])->middleware('permission:tagging,create')
+        ->name('taggings.store');
+    Route::put('/admin/tagging/{tagging}', [TaggingController::class, 'update'])->middleware('permission:tagging,edit')
+        ->name('taggings.update');
+    Route::delete('/admin/tagging/{tagging}', [TaggingController::class, 'destroy'])->middleware('permission:tagging,delete')
+        ->name('admin.tagging.delete');
+    // Form Builder Routes
+    Route::get('/admin/add-customer', [FormBuilderController::class, 'create'])->name('forms.create');
+    Route::post('/admin/forms/store', [FormBuilderController::class, 'store'])->name('forms.store');
+    Route::get('/forms/{form}', [DynamicFormController::class, 'show'])->name('forms.show');
+    Route::post('/my-form', [DynamicFormController::class, 'submit'])->name('forms.submit');
+    // Brands Routes
+
 });
-
-
 // Website Routes
 Route::view('/', 'user.customer_form')->name('customer.form');
 

@@ -62,7 +62,7 @@
                                     </div><!--end col-->
                                     
                                     <div class="col-auto">
-                                        <a href="{{route('admin.customers.add')}}" class="btn btn-primary d-flex align-items-center"> <i class="fa-solid fa-plus me-1"></i> Add Customer</a>
+                                        <a href="{{route('forms.create')}}" class="btn btn-primary d-flex align-items-center"> <i class="fa-solid fa-plus me-1"></i> Add Customer</a>
                                     </div>
                                 </form>    
                             </div><!--end col-->
