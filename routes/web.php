@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\DynamicFormController;
 use App\Http\Controllers\Admin\FormBuilderController;
 use App\Http\Controllers\Admin\TaggingController;
+use App\Http\Controllers\Admin\UseCaseController;
 use App\Http\Controllers\ProfileController;
 use App\Models\Announcement;
 use Illuminate\Support\Facades\DB;
@@ -69,6 +70,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/brands/{brand}/edit', [BrandController::class, 'edit'])->name('brands.edit');
         Route::put('/brands/{brand}', [BrandController::class, 'update'])->name('brands.update');
         Route::delete('/brands/{brand}', [BrandController::class, 'destroy'])->name('brands.destroy');
+    });
+    // Use Cases Routes
+    Route::prefix('/admin')->name('admin.')->group(function () {
+        Route::get('/use-cases', [UseCaseController::class, 'index'])->name('use-cases.index');
+        Route::post('/use-cases', [UseCaseController::class, 'store'])->name('use-cases.store');
+        Route::get('/use-cases/{use_case}/edit', [UseCaseController::class, 'edit'])->name('use-cases.edit');
+        Route::put('/use-cases/{use_case}', [UseCaseController::class, 'update'])->name('use-cases.update');
+        Route::delete('/use-cases/{use_case}', [UseCaseController::class, 'destroy'])->name('use-cases.destroy');
     });
 });
 // Website Routes

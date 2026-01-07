@@ -63,18 +63,20 @@
                             </a>
                         </li>
                     @endif
-                      <li class="nav-item">
-                            <a class="nav-link" href="{{ route('admin.tagging.list') }}">
-                                <i class="iconoir-label menu-icon"></i>
-                                <span>Brands</span>
-                            </a>
-                        </li>
-                          <li class="nav-item">
-                            <a class="nav-link" href="{{ route('admin.tagging.list') }}">
-                                <i class="iconoir-label menu-icon"></i>
-                                <span>Use Cases</span>
-                            </a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('admin.brands.index') }}">
+                            <i class="iconoir-shop menu-icon"></i>
+                            <span>Brands</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('admin.use-cases.index') }}">
+                            <i class="iconoir-light-bulb menu-icon"></i>
+                            <span>Use Cases</span>
+                        </a>
+                    </li>
+
                     @if (auth()->user()->canAccess('announcement', 'view'))
                         <li class="nav-item">
                             <a class="nav-link" href="#sidebarAnnouncements" data-bs-toggle="collapse" role="button"

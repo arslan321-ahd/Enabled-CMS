@@ -60,7 +60,7 @@
 
                                 <div class="col-auto">
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                        data-bs-target="#addTagging"><i class="fa-solid fa-plus me-1"></i> Add
+                                        data-bs-target="#addBrand"><i class="fa-solid fa-plus me-1"></i> Add
                                         Brands</button>
                                 </div>
                             </form>
@@ -72,15 +72,17 @@
                         <table class="table mb-0 checkbox-all" id="">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-0">Name</th>
+                                    <th class="ps-0">ID</th>
+                                    <th>Name</th>
                                     <th>Status</th>
                                     <th>Reference Link</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($brands as $brand)
+                                @forelse($brands as $index => $brand)
                                     <tr>
+                                        <td>{{ $index + 1 }}</td>
                                         <td class="ps-0">
                                             <div class="d-flex align-items-center gap-2">
                                                 <img src="{{ asset('storage/' . $brand->logo) }}" width="32"
@@ -138,11 +140,11 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="addTagging" tabindex="-1" aria-labelledby="addTaggingLabel" aria-hidden="true">
+<div class="modal fade" id="addBrand" tabindex="-1" aria-labelledby="addBrandLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-light">
-                <h5 class="modal-title text-dark" id="addTaggingLabel">Add Tagging</h5>
+                <h5 class="modal-title text-dark" id="addBrandLabel">Add Brand</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="addBrandForm" enctype="multipart/form-data">
@@ -280,7 +282,7 @@
 
                         // Close modal
                         const modal = bootstrap.Modal.getInstance(document.getElementById(
-                            'addTagging'));
+                            'addBrand'));
                         modal.hide();
 
                         // Optionally reload or append new row
