@@ -6,12 +6,12 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="page-title-box d-md-flex justify-content-md-between align-items-center">
-                <h4 class="page-title">Post Announcement</h4>
+                <h4 class="page-title">Edit Announcement</h4>
                 <div class="">
                     <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item"><a href="javascript:void(0);">Enable</a>
                         </li>
-                        <li class="breadcrumb-item active">Post Announcement</li>
+                        <li class="breadcrumb-item active">Edit Announcement</li>
                     </ol>
                 </div>
             </div><!--end page-title-box-->
@@ -23,7 +23,7 @@
                 <div class="card-header">
                     <div class="row align-items-center">
                         <div class="col">
-                            <h4 class="card-title">New Announcement</h4>
+                            <h4 class="card-title">Edit Announcement</h4>
                         </div>
                     </div>
                 </div>

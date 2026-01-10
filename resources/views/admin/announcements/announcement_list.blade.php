@@ -16,7 +16,7 @@
             </div>
         </div>
     </div>
-    <div class="row justify-content-center">
+    <div class="row">
         @foreach ($announcements as $announcement)
             <div class="col-md-6 col-lg-4">
                 <div class="card">

@@ -10,6 +10,6 @@ class Form extends Model
 
     public function fields()
     {
-        return $this->hasMany(FormField::class)->orderBy('order');
+        return $this->hasMany(FormField::class);
     }
 }

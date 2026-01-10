@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('source');
             $table->enum('status', ['online', 'offline']);
-            $table->string('ref_url');
+            $table->string('ref_url')->nullable();
             $table->timestamps();
         });
     }

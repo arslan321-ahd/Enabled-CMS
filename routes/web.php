@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\BrandController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DynamicFormController;
 use App\Http\Controllers\Admin\FormBuilderController;
 use App\Http\Controllers\Admin\TaggingController;
@@ -19,7 +20,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('/admin/dashboard', 'admin.dashboard')->name('dashboard');
+    Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::view('', 'admin.customers.add_customer')->name('admin.customers.add');
     Route::view('/admin/customers-list', 'admin.customers.customer_list')->name('admin.customers.list');
     Route::view('/admin/calender', 'admin.calender.calender')->name('admin.calender');
@@ -54,14 +55,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('admin.tagging.list');
     Route::post('/admin/tagging', [TaggingController::class, 'store'])->middleware('permission:tagging,create')
         ->name('taggings.store');
-    Route::put('/admin/tagging/{tagging}', [TaggingController::class, 'update'])->middleware('permission:tagging,edit')
+    Route::put('/admin/tagging-update/{tagging}', [TaggingController::class, 'update'])->middleware('permission:tagging,edit')
         ->name('taggings.update');
     Route::delete('/admin/tagging/{tagging}', [TaggingController::class, 'destroy'])->middleware('permission:tagging,delete')
         ->name('admin.tagging.delete');
     // Form Builder Routes
     Route::get('/admin/add-customer', [FormBuilderController::class, 'create'])->name('forms.create');
     Route::post('/admin/forms/store', [FormBuilderController::class, 'store'])->name('forms.store');
-    Route::get('/forms/{form}', [DynamicFormController::class, 'show'])->name('forms.show');
+
+    Route::get('/my-form', [DynamicFormController::class, 'show'])->name('forms.my');
     Route::post('/my-form', [DynamicFormController::class, 'submit'])->name('forms.submit');
     // Brands Routes
     Route::prefix('/admin')->name('admin.')->group(function () {

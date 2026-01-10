@@ -3,41 +3,99 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\Form;
 use App\Models\FormSubmission;
 use App\Models\SubmissionValue;
+use App\Models\UseCase;
 use Illuminate\Http\Request;
 
 class DynamicFormController extends Controller
 {
-    public function show(Form $form)
+    public function show()
     {
-        // // Optional: check if the logged-in user is allowed to view this form
-        // if ($form->user_id !== auth()->id() || !$form->active) {
-        //     abort(403);
-        // }
+        $form = Form::where('user_id', auth()->id())
+            ->where('active', true)
+            ->with('fields')
+            ->firstOrFail();
 
-        $form->load('fields'); // eager load fields
+        // Load dynamic data
+        $brands = Brand::where('status', 'active')->get();
+        $useCases = UseCase::where('status', 'active')->get();
 
-        return view('forms.dynamic', compact('form'));
+        return view('forms.dynamic', compact('form', 'brands', 'useCases'));
     }
-
 
     public function submit(Request $request)
     {
-        $form = Form::with('fields')
-            ->where('user_id', auth()->id())
+        $form = Form::where('user_id', auth()->id())
+            ->where('active', true)
+            ->with('fields')
             ->firstOrFail();
 
+        // Build validation rules safely
         $rules = [];
+
         foreach ($form->fields as $field) {
-            if ($field->validation) {
-                $rules[$field->name] = $field->validation;
+
+            $fieldRules = [];
+
+            $fieldRules[] = $field->required ? 'required' : 'nullable';
+
+            if (in_array($field->type, ['text', 'textarea'])) {
+                $fieldRules[] = 'string';
             }
+
+            if ($field->type === 'email') {
+                $fieldRules[] = 'email';
+            }
+
+            if ($field->type === 'number') {
+                $fieldRules[] = 'numeric';
+            }
+
+            if ($field->validation) {
+                foreach (explode('|', $field->validation) as $rule) {
+                    $rule = trim($rule);
+
+                    // Fix bad rules like "255"
+                    if ($rule === '255') {
+                        $fieldRules[] = 'max:255';
+                        continue;
+                    }
+
+                    if (preg_match('/^(max|min):\s*(\d+)$/', $rule, $m)) {
+                        $fieldRules[] = "{$m[1]}:{$m[2]}";
+                        continue;
+                    }
+
+                    if (in_array($rule, [
+                        'string',
+                        'email',
+                        'numeric',
+                        'integer',
+                        'file',
+                        'image'
+                    ])) {
+                        $fieldRules[] = $rule;
+                    }
+                }
+            }
+
+            $rules[$field->name] = implode('|', array_unique($fieldRules));
         }
 
+        // Validate
         $validated = $request->validate($rules);
+        $oldSubmission = FormSubmission::where('form_id', $form->id)
+            ->where('user_id', auth()->id())
+            ->first();
 
+        if ($oldSubmission) {
+            $oldSubmission->delete(); // cascades submission_values
+        }
+
+        // ✅ CREATE NEW SUBMISSION
         $submission = FormSubmission::create([
             'form_id' => $form->id,
             'user_id' => auth()->id(),
@@ -47,10 +105,13 @@ class DynamicFormController extends Controller
             SubmissionValue::create([
                 'submission_id' => $submission->id,
                 'form_field_id' => $field->id,
-                'value' => $request[$field->name] ?? null,
+                'value'         => $validated[$field->name] ?? null,
             ]);
         }
 
-        return redirect()->back()->with('success', 'Form Submitted');
+        return response()->json([
+            'status'  => true,
+            'message' => 'Form submitted successfully'
+        ]);
     }
 }

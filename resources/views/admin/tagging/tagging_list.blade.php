@@ -290,75 +290,85 @@
     });
 </script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.editTaggingBtn').forEach(button => {
-            button.addEventListener('click', function() {
-                const id = this.dataset.id;
-                document.getElementById('edit_source').value = this.dataset.source;
-                document.getElementById('edit_status').value = this.dataset.status;
-                document.getElementById('edit_ref_url').value = this.dataset.ref_url;
-                document.getElementById('editTaggingForm').dataset.id = id;
-                new bootstrap.Modal(document.getElementById('editTaggingModal')).show();
-            });
-        });
-        document.getElementById('editTaggingForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const form = this;
-            const id = form.dataset.id;
-            const formData = new FormData(form);
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Updating...';
-            submitBtn.disabled = true;
-            fetch(`/taggings-update/${id}`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: formData
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const modal = bootstrap.Modal.getInstance(document.getElementById(
-                        'editTaggingModal'));
-                    modal.hide();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: data.message || 'Tagging updated successfully',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                })
-                .catch(error => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: 'Failed to update tagging. Please try again.',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                    submitBtn.innerHTML = originalBtnText;
-                    submitBtn.disabled = false;
-                    console.error('Error:', error);
-                });
+document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('.editTaggingBtn').forEach(button => {
+        button.addEventListener('click', function () {
+            const id = this.dataset.id;
+
+            document.getElementById('edit_source').value = this.dataset.source;
+            document.getElementById('edit_status').value = this.dataset.status;
+            document.getElementById('edit_ref_url').value = this.dataset.ref_url;
+
+            document.getElementById('editTaggingForm').dataset.id = id;
+
+            new bootstrap.Modal(document.getElementById('editTaggingModal')).show();
         });
     });
+
+    document.getElementById('editTaggingForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const form = this;
+        const id = form.dataset.id; // ✅ actual tagging ID
+        const formData = new FormData(form);
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+
+        submitBtn.innerHTML = 'Updating...';
+        submitBtn.disabled = true;
+
+        fetch(`/admin/tagging-update/${id}`, {   // ✅ FIXED URL
+            method: 'POST',                      // ✅ Laravel spoofing
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            bootstrap.Modal.getInstance(
+                document.getElementById('editTaggingModal')
+            ).hide();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message || 'Tagging updated successfully',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+
+            setTimeout(() => window.location.reload(), 800);
+        })
+        .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'Failed to update tagging.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+
+            console.error(error);
+        });
+    });
+});
 </script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.delete-form').forEach(function(form) {

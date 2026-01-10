@@ -3,12 +3,18 @@
 namespace App\Providers;
 
 use App\Models\Announcement;
+use App\Models\Brand;
+use App\Models\Log;
 use App\Models\Tagging;
+use App\Models\UseCase;
 use App\Models\User;
 use App\Observers\AnnouncementObserver;
+use App\Observers\BrandObserver;
 use App\Observers\TaggingObserver;
+use App\Observers\UseCaseObserver;
 use App\Observers\UserObserver;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,5 +31,23 @@ class AppServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
         Tagging::observe(TaggingObserver::class);
         Announcement::observe(AnnouncementObserver::class);
+        Brand::observe(BrandObserver::class);
+        UseCase::observe(UseCaseObserver::class);
+        View::composer('*', function ($view) {
+            $systemActions = config('system_logs.actions'); // system-only actions
+
+            $allNotifications = Log::latest()->limit(15)->get();
+            $systemLogs      = Log::whereIn('action', $systemActions)
+                ->latest()
+                ->limit(10)
+                ->get();
+            $notificationCount = Log::count();
+
+            $view->with([
+                'allNotifications' => $allNotifications,
+                'systemLogs'       => $systemLogs,
+                'notificationCount' => $notificationCount
+            ]);
+        });
     }
 }

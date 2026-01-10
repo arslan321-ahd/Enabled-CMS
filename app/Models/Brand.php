@@ -13,4 +13,9 @@ class Brand extends Model
         'status',
         'reference_url',
     ];
+
+    public function useCases()
+    {
+        return $this->hasMany(UseCase::class);
+    }
 }

@@ -19,7 +19,7 @@ class TaggingRequest extends FormRequest
         return [
             'source'  => 'required|string|max:255',
             'status'  => 'required|in:online,offline',
-            'ref_url' => 'required|url|max:500',
+            'ref_url' => 'nullable|url|max:255',
         ];
     }
 
