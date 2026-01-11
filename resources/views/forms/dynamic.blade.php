@@ -131,7 +131,7 @@
 
         let formData = new FormData(this);
 
-        fetch("{{ route('forms.submit') }}", {
+        fetch("{{ route('form.submit', $form->slug) }}", {
                 method: "POST",
                 headers: {
                     'X-CSRF-TOKEN': "{{ csrf_token() }}"

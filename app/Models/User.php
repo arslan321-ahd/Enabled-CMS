@@ -146,4 +146,8 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->role === 'admin';
     }
+    public function formSubmissions()
+    {
+        return $this->hasMany(FormSubmission::class);
+    }
 }

@@ -33,7 +33,7 @@
                     {{-- Customers --}}
                     @if (auth()->user()->canAccess('tagging', 'view'))
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('admin.customers.list') }}">
+                            <a class="nav-link" href="{{ route('admin.forms.index') }}">
                                 <i class="iconoir-community menu-icon"></i>
                                 <span>Customers List</span>
                             </a>

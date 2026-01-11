@@ -14,30 +14,48 @@ class DynamicFormController extends Controller
 {
     public function show()
     {
-        $form = Form::where('user_id', auth()->id())
-            ->where('active', true)
-            ->with('fields')
-            ->firstOrFail();
-
-        // Load dynamic data
+        $form = Form::where('active', true)
+            ->with('fields');
         $brands = Brand::where('status', 'active')->get();
         $useCases = UseCase::where('status', 'active')->get();
 
         return view('forms.dynamic', compact('form', 'brands', 'useCases'));
     }
-
-    public function submit(Request $request)
+    public function showSubmissions(Form $form)
     {
-        $form = Form::where('user_id', auth()->id())
+
+        $submissions = FormSubmission::where('form_id', $form->id)
+            ->with(['user', 'values.field'])
+            ->latest()
+            ->paginate(20);
+
+        return view('admin.customers.submissions', compact('form', 'submissions'));
+    }
+    public function showPublic($slug)
+    {
+        $form = Form::where('slug', $slug)
+            ->where('active', true)
+            ->with('fields')
+            ->firstOrFail();
+        $brands   = Brand::where('status', 'active')->get();
+        $useCases = UseCase::where('status', 'active')->get();
+
+        return view('forms.dynamic', compact('form', 'brands', 'useCases'));
+    }
+
+    public function submit(Request $request, $slug)
+    {
+        $form = Form::where('slug', $slug)
             ->where('active', true)
             ->with('fields')
             ->firstOrFail();
 
-        // Build validation rules safely
+        // ------------------------------
+        // Build dynamic validation rules
+        // ------------------------------
         $rules = [];
 
         foreach ($form->fields as $field) {
-
             $fieldRules = [];
 
             $fieldRules[] = $field->required ? 'required' : 'nullable';
@@ -58,26 +76,13 @@ class DynamicFormController extends Controller
                 foreach (explode('|', $field->validation) as $rule) {
                     $rule = trim($rule);
 
-                    // Fix bad rules like "255"
                     if ($rule === '255') {
                         $fieldRules[] = 'max:255';
                         continue;
                     }
 
-                    if (preg_match('/^(max|min):\s*(\d+)$/', $rule, $m)) {
+                    if (preg_match('/^(max|min):(\d+)$/', $rule, $m)) {
                         $fieldRules[] = "{$m[1]}:{$m[2]}";
-                        continue;
-                    }
-
-                    if (in_array($rule, [
-                        'string',
-                        'email',
-                        'numeric',
-                        'integer',
-                        'file',
-                        'image'
-                    ])) {
-                        $fieldRules[] = $rule;
                     }
                 }
             }
@@ -85,20 +90,24 @@ class DynamicFormController extends Controller
             $rules[$field->name] = implode('|', array_unique($fieldRules));
         }
 
-        // Validate
         $validated = $request->validate($rules);
-        $oldSubmission = FormSubmission::where('form_id', $form->id)
-            ->where('user_id', auth()->id())
-            ->first();
 
-        if ($oldSubmission) {
-            $oldSubmission->delete(); // cascades submission_values
+        // ------------------------------
+        // Logged-in user: overwrite
+        // Guest user: allow multiple
+        // ------------------------------
+        if (auth()->check()) {
+            FormSubmission::where('form_id', $form->id)
+                ->where('user_id', auth()->id())
+                ->delete();
         }
 
-        // ✅ CREATE NEW SUBMISSION
+        // ------------------------------
+        // Create submission
+        // ------------------------------
         $submission = FormSubmission::create([
             'form_id' => $form->id,
-            'user_id' => auth()->id(),
+            'user_id' => auth()->check() ? auth()->id() : null,
         ]);
 
         foreach ($form->fields as $field) {
@@ -111,7 +120,7 @@ class DynamicFormController extends Controller
 
         return response()->json([
             'status'  => true,
-            'message' => 'Form submitted successfully'
+            'message' => 'Form submitted successfully',
         ]);
     }
 }
