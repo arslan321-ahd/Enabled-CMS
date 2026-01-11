@@ -26,7 +26,7 @@
                             <h4 class="card-title">Brands</h4>
                         </div>
                         <div class="col-auto">
-                            <form class="row g-2">
+                            <form class="row g-2" id="brandFilterForm">
                                 <div class="col-auto">
                                     <a class="btn bg-primary-subtle text-primary dropdown-toggle d-flex align-items-center arrow-none"
                                         data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false"
@@ -36,28 +36,32 @@
                                     <div class="dropdown-menu dropdown-menu-start">
                                         <div class="p-2">
                                             <div class="form-check mb-2">
-                                                <input type="checkbox" class="form-check-input" checked id="filter-all">
+                                                <input type="checkbox" class="brand-filter" value="all"
+                                                    id="filter-all"
+                                                    {{ empty(request('status')) ? 'checked' : (in_array('all', (array) request('status', [])) ? 'checked' : '') }}>
                                                 <label class="form-check-label" for="filter-all">
                                                     All
                                                 </label>
                                             </div>
                                             <div class="form-check mb-2">
-                                                <input type="checkbox" class="form-check-input" checked id="filter-two">
+                                                <input type="checkbox" class="brand-filter" value="active"
+                                                    id="filter-two"
+                                                    {{ in_array('active', (array) request('status', [])) ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="filter-two">
-                                                    Online
+                                                    Active
                                                 </label>
                                             </div>
                                             <div class="form-check">
-                                                <input type="checkbox" class="form-check-input" checked
-                                                    id="filter-three">
+                                                <input type="checkbox" class="brand-filter" value="inactive"
+                                                    id="filter-three"
+                                                    {{ in_array('inactive', (array) request('status', [])) ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="filter-three">
-                                                    Offline
+                                                    Inactive
                                                 </label>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="col-auto">
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                                         data-bs-target="#addBrand"><i class="fa-solid fa-plus me-1"></i> Add
@@ -90,7 +94,6 @@
                                                 <span>{{ $brand->name }}</span>
                                             </div>
                                         </td>
-
                                         <td>
                                             @if ($brand->status === 'active')
                                                 <span class="badge bg-success-subtle text-success px-2">Active</span>
@@ -98,7 +101,6 @@
                                                 <span class="badge bg-danger-subtle text-danger px-2">Inactive</span>
                                             @endif
                                         </td>
-
                                         <td>
                                             @if ($brand->reference_url)
                                                 <a href="{{ $brand->reference_url }}" target="_blank">
@@ -108,21 +110,18 @@
                                                 -
                                             @endif
                                         </td>
-
                                         <td>
                                             <a href="javascript:void(0)" data-id="{{ $brand->id }}"
                                                 class="btn btn-sm btn-primary btn-edit-brand" data-bs-toggle="tooltip"
                                                 title="Edit">
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </a>
-
                                             <a href="javascript:void(0)" data-id="{{ $brand->id }}"
                                                 class="btn btn-sm btn-danger btn-delete-brand" data-bs-toggle="tooltip"
                                                 title="Delete">
                                                 <i class="fa-solid fa-trash"></i>
                                             </a>
                                         </td>
-
                                     </tr>
                                 @empty
                                     <tr>
@@ -132,7 +131,6 @@
                                     </tr>
                                 @endforelse
                             </tbody>
-
                         </table>
                     </div>
                 </div>
@@ -150,19 +148,16 @@
             <form id="addBrandForm" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
-
                     <div class="mb-3">
                         <label class="form-label" for="add_name">Brand Name</label>
                         <input type="text" class="form-control" id="add_name" name="name"
                             placeholder="Enter brand name" required>
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label" for="add_logo">Brand Logo</label>
                         <input type="file" class="form-control" id="add_logo" name="logo" accept="image/*"
                             required>
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label" for="add_status">Status</label>
                         <select class="form-select" id="add_status" name="status" required>
@@ -171,7 +166,6 @@
                             <option value="inactive">Inactive</option>
                         </select>
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label" for="add_reference_url">Reference URL</label>
                         <input type="url" class="form-control" id="add_reference_url" name="reference_url"
@@ -193,18 +187,15 @@
                 <h5 class="modal-title text-dark">Edit Brand</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
             <form id="editBrandForm" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <div class="modal-body">
                     <input type="hidden" name="brand_id" id="edit_brand_id">
-
                     <div class="mb-3">
                         <label class="form-label">Brand Name</label>
                         <input type="text" class="form-control" name="name" id="edit_name" required>
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label">Brand Logo</label>
                         <input type="file" class="form-control" name="logo" id="edit_logo">
@@ -214,7 +205,6 @@
                                 alt="Current Logo" style="display: none;">
                         </div>
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label">Status</label>
                         <select class="form-select" name="status" id="edit_status" required>
@@ -222,13 +212,11 @@
                             <option value="inactive">Inactive</option>
                         </select>
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label">Reference URL</label>
                         <input type="url" class="form-control" name="reference_url" id="edit_reference_url">
                     </div>
                 </div>
-
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="editBrandSubmit">
@@ -240,8 +228,6 @@
         </div>
     </div>
 </div>
-
-
 <script src="{{ asset('assets/libs/simple-datatables/umd/simple-datatables.js') }}"></script>
 <script src="{{ asset('assets/js/pages/datatable.init.js') }}"></script>
 <script>
@@ -257,13 +243,9 @@
                 toast.addEventListener('mouseleave', Swal.resumeTimer);
             }
         });
-
-        // Add Brand AJAX
         document.getElementById('addBrandForm').addEventListener('submit', function(e) {
             e.preventDefault();
-
             let formData = new FormData(this);
-
             fetch("{{ route('admin.brands.store') }}", {
                     method: 'POST',
                     headers: {
@@ -279,13 +261,9 @@
                             title: 'Success!',
                             text: data.message
                         });
-
-                        // Close modal
                         const modal = bootstrap.Modal.getInstance(document.getElementById(
                             'addBrand'));
                         modal.hide();
-
-                        // Optionally reload or append new row
                         setTimeout(() => location.reload(), 500);
                     }
                 })
@@ -314,61 +292,42 @@
                 toast.addEventListener('mouseleave', Swal.resumeTimer);
             }
         });
-
-        // Show loading spinner for form submit buttons
         function showLoading(button) {
             if (!button || !button.querySelector) return;
-
             button.disabled = true;
             const submitText = button.querySelector('.submit-text');
             const spinner = button.querySelector('.spinner-border');
-
             if (submitText) submitText.classList.add('d-none');
             if (spinner) spinner.classList.remove('d-none');
         }
-
-        // Hide loading spinner
         function hideLoading(button) {
             if (!button || !button.querySelector) return;
-
             button.disabled = false;
             const submitText = button.querySelector('.submit-text');
             const spinner = button.querySelector('.spinner-border');
-
             if (submitText) submitText.classList.remove('d-none');
             if (spinner) spinner.classList.add('d-none');
         }
-
-        // Show loading on edit button itself (different structure)
         function showEditButtonLoading(button) {
             if (!button) return;
-
             const originalHTML = button.innerHTML;
             button.setAttribute('data-original-html', originalHTML);
             button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             button.disabled = true;
         }
-
-        // Hide loading on edit button
         function hideEditButtonLoading(button) {
             if (!button) return;
-
             const originalHTML = button.getAttribute('data-original-html');
             if (originalHTML) {
                 button.innerHTML = originalHTML;
             }
             button.disabled = false;
         }
-
-        // Open Edit Modal - FIXED VERSION
         document.querySelectorAll('.btn-edit-brand').forEach(btn => {
             btn.addEventListener('click', function() {
                 const brandId = this.dataset.id;
                 const editButton = this;
-
-                // Show loading on the edit button itself
                 showEditButtonLoading(editButton);
-
                 fetch(`/admin/brands/${brandId}/edit`)
                     .then(res => {
                         if (!res.ok) {
@@ -378,13 +337,11 @@
                     })
                     .then(data => {
                         console.log('Brand data loaded:', data);
-
                         document.getElementById('edit_brand_id').value = data.id;
                         document.getElementById('edit_name').value = data.name;
                         document.getElementById('edit_status').value = data.status;
                         document.getElementById('edit_reference_url').value = data
                             .reference_url || '';
-
                         if (data.logo) {
                             const logoElement = document.getElementById('current_logo');
                             logoElement.src = `/storage/${data.logo}`;
@@ -392,8 +349,6 @@
                         } else {
                             document.getElementById('current_logo').style.display = 'none';
                         }
-
-                        // Initialize and show modal
                         const editModal = new bootstrap.Modal(document.getElementById(
                             'editBrandModal'));
                         editModal.show();
@@ -406,20 +361,15 @@
                         });
                     })
                     .finally(() => {
-                        // Hide loading on edit button
                         hideEditButtonLoading(editButton);
                     });
             });
         });
-
-        // Submit Edit Form
         document.getElementById('editBrandForm').addEventListener('submit', function(e) {
             e.preventDefault();
-
             const submitBtn = document.getElementById('editBrandSubmit');
             const brandId = document.getElementById('edit_brand_id').value;
             const formData = new FormData(this);
-
             if (!brandId) {
                 Toast.fire({
                     icon: 'error',
@@ -427,12 +377,8 @@
                 });
                 return;
             }
-
             showLoading(submitBtn);
-
-            // Add _method for Laravel to recognize PUT request
             formData.append('_method', 'PUT');
-
             fetch(`/admin/brands/${brandId}`, {
                     method: 'POST',
                     headers: {
@@ -455,8 +401,6 @@
                             title: 'Success!',
                             text: data.message
                         });
-
-                        // Close modal and reload page after delay
                         setTimeout(() => {
                             const modal = bootstrap.Modal.getInstance(document
                                 .getElementById('editBrandModal'));
@@ -478,22 +422,15 @@
                     hideLoading(submitBtn);
                 });
         });
-
-        // Submit Add Form with spinner
         document.getElementById('addBrandForm').addEventListener('submit', function(e) {
             const submitBtn = document.getElementById('addBrandSubmit');
             showLoading(submitBtn);
         });
-
-        // Delete Brand
         document.querySelectorAll('.btn-delete-brand').forEach(btn => {
             btn.addEventListener('click', function() {
                 const brandId = this.dataset.id;
                 const deleteButton = this;
-
-                // Store original content
                 const originalContent = this.innerHTML;
-
                 Swal.fire({
                     title: 'Are you sure?',
                     text: 'This brand will be deleted permanently.',
@@ -504,11 +441,9 @@
                     confirmButtonText: 'Yes, delete it!'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Show loading on delete button
                         deleteButton.innerHTML =
                             '<i class="fa-solid fa-spinner fa-spin"></i>';
                         deleteButton.disabled = true;
-
                         fetch(`/admin/brands/${brandId}`, {
                                 method: 'DELETE',
                                 headers: {
@@ -539,7 +474,6 @@
                                 });
                             })
                             .finally(() => {
-                                // Reset button state
                                 deleteButton.innerHTML = originalContent;
                                 deleteButton.disabled = false;
                             });
@@ -547,8 +481,6 @@
                 });
             });
         });
-
-        // Reset form when modal is closed
         const editModal = document.getElementById('editBrandModal');
         if (editModal) {
             editModal.addEventListener('hidden.bs.modal', function() {
@@ -557,6 +489,61 @@
                 if (submitBtn) hideLoading(submitBtn);
             });
         }
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('.brand-filter');
+        const allCheckbox = document.querySelector('.brand-filter[value="all"]');
+        function updateBrandFilterUrl() {
+            const checkedValues = [];
+            checkboxes.forEach(cb => {
+                if (cb.checked && cb.value !== '') {
+                    checkedValues.push(cb.value);
+                }
+            });
+            let url = "{{ route('admin.brands.index') }}";
+            const filteredValues = checkedValues.filter(value => value !== 'all');
+            if (filteredValues.length > 0) {
+                const params = new URLSearchParams();
+                filteredValues.forEach(value => {
+                    params.append('status[]', value);
+                });
+                url += '?' + params.toString();
+            } else if (checkedValues.includes('all') || checkedValues.length === 0) {
+                url = "{{ route('admin.brands.index') }}";
+            }
+            console.log('Brand filter - Navigating to:', url);
+            window.location.href = url;
+        }
+        const hasChecked = Array.from(checkboxes).some(cb => cb.checked);
+        if (!hasChecked && allCheckbox) {
+            allCheckbox.checked = true;
+        }
+        checkboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                if (this.value === 'all') {
+                    if (this.checked) {
+                        checkboxes.forEach(cb => {
+                            if (cb !== this) {
+                                cb.checked = false;
+                            }
+                        });
+                    }
+                } else {
+                    if (this.checked && allCheckbox) {
+                        allCheckbox.checked = false;
+                    }
+                    const specificCheckboxes = Array.from(checkboxes).filter(cb => cb.value !==
+                        'all');
+                    const hasSpecificChecked = specificCheckboxes.some(cb => cb.checked);
+                    if (!hasSpecificChecked && allCheckbox) {
+                        allCheckbox.checked = true;
+                    }
+                }
+                setTimeout(updateBrandFilterUrl, 50);
+            });
+        });
     });
 </script>
 @endsection

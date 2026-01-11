@@ -45,4 +45,8 @@ class FormSubmission extends Model
             })
             ->value('value');
     }
+    public function logs()
+    {
+        return $this->morphMany(Log::class, 'loggable');
+    }
 }

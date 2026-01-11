@@ -22,35 +22,24 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="">
-                            {{-- Display attachment if exists, otherwise a default image --}}
                             <img src="{{ $announcement->attachment ? asset('storage/' . $announcement->attachment) : asset('assets/images/extra/card/img-1.jpg') }}"
                                 alt="{{ $announcement->title }}" class="img-fluid rounded" />
-
                             <div class="mt-3">
-                                {{-- Category Badge --}}
                                 <span class="badge bg-purple-subtle text-purple px-2 py-1 fw-semibold">
                                     {{ $announcement->category }}
                                 </span> |
-
-                                {{-- Date --}}
                                 <p class="mb-0 text-muted fs-12 d-inline-block">
                                     {{ $announcement->created_at->format('d M Y') }}
                                 </p>
                             </div>
-
-                            {{-- Announcement Title --}}
                             <a href="{{ route('announcements.show', $announcement) }}"
                                 class="d-block fs-22 fw-semibold text-body my-2 text-truncate">
                                 {{ $announcement->title }}
                             </a>
-
-                            {{-- Short content snippet --}}
                             <p class="text-muted">
                                 {{ Str::limit(strip_tags($announcement->content), 100) }}
                             </p>
-
                             <hr class="hr-dashed">
-
                             <div class="d-flex justify-content-between">
                                 <div class="d-flex align-items-center">
                                     <div class="flex-shrink-0">
@@ -87,7 +76,6 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-
         const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
@@ -99,7 +87,6 @@
                 toast.addEventListener('mouseleave', Swal.resumeTimer);
             }
         });
-        /* ================= ANNOUNCEMENTS ================= */
         @if (session('status') === 'announcement-created')
             Toast.fire({
                 icon: 'success',
@@ -107,7 +94,6 @@
                 text: 'Announcement created successfully.'
             });
         @endif
-
         @if (session('status') === 'announcement-updated')
             Toast.fire({
                 icon: 'success',
@@ -115,7 +101,6 @@
                 text: 'Announcement updated successfully.'
             });
         @endif
-
         @if (session('status') === 'announcement-deleted')
             Toast.fire({
                 icon: 'success',
@@ -123,7 +108,6 @@
                 text: 'Announcement deleted successfully.'
             });
         @endif
-        /* ================= VALIDATION ERRORS ================= */
         @if ($errors->any())
             Toast.fire({
                 icon: 'error',

@@ -24,21 +24,15 @@ class BranchController extends Controller
     {
         $status = $request->get('status');
         $branches = $branchService->list($status);
-
-        // Get modules from database OR create default ones
         $modules = Module::all();
-
-        // If no modules exist, create default ones
         if ($modules->isEmpty()) {
             $defaultModules = [
                 ['name' => 'Tagging', 'slug' => 'tagging'],
                 ['name' => 'Announcement', 'slug' => 'announcement'],
             ];
-
             foreach ($defaultModules as $moduleData) {
                 Module::create($moduleData);
             }
-
             $modules = Module::all();
         }
 

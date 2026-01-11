@@ -1,7 +1,6 @@
 @extends('admin.partials.layouts')
 @section('content')
 @section('title', 'Use Cases')
-
 <div class="container-fluid">
     <div class="row">
         <div class="col-sm-12">
@@ -16,7 +15,6 @@
             </div>
         </div>
     </div>
-
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -26,16 +24,56 @@
                             <h4 class="card-title">Use Cases</h4>
                         </div>
                         <div class="col-auto">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                data-bs-target="#addUseCaseModal">
-                                <i class="fa-solid fa-plus me-1"></i> Add Use Case
-                            </button>
+                            <form class="row g-2" id="useCaseFilterForm">
+                                <div class="col-auto">
+                                    <a class="btn bg-primary-subtle text-primary dropdown-toggle d-flex align-items-center arrow-none"
+                                        data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false"
+                                        aria-expanded="false" data-bs-auto-close="outside">
+                                        <i class="iconoir-filter-alt me-1"></i> Filter
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-start">
+                                        <div class="p-2">
+                                            <div class="form-check mb-2">
+                                                <input type="checkbox" class="use-case-filter" value="all"
+                                                    id="filter-all"
+                                                    {{ empty(request('status')) ? 'checked' : (in_array('all', (array) request('status', [])) ? 'checked' : '') }}>
+                                                <label class="form-check-label" for="filter-all">
+                                                    All
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input type="checkbox" class="use-case-filter" value="active"
+                                                    id="filter-two"
+                                                    {{ in_array('active', (array) request('status', [])) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="filter-two">
+                                                    Active
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="use-case-filter" value="inactive"
+                                                    id="filter-three"
+                                                    {{ in_array('inactive', (array) request('status', [])) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="filter-three">
+                                                    Inactive
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                        data-bs-target="#addUseCaseModal">
+                                        <i class="fa-solid fa-plus me-1"></i> Add Use Case
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
                 <div class="card-body pt-0">
                     <div class="table-responsive">
-                        <table class="table mb-0">
+                        <table class="table mb-0 checkbox-all" id="">
                             <thead class="table-light">
                                 <tr>
                                     <th>ID</th>
@@ -200,7 +238,9 @@
         </div>
     </div>
 </div>
-
+<script src="{{ asset('assets/libs/simple-datatables/umd/simple-datatables.js') }}"></script>
+<script src="{{ asset('assets/js/pages/datatable.init.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const Toast = Swal.mixin({
@@ -522,6 +562,81 @@
                 resetFormErrors('edit_');
             });
         }
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('.use-case-filter');
+        const allCheckbox = document.querySelector('.use-case-filter[value="all"]');
+        
+        // Function to update URL with selected filters
+        function updateUseCaseFilterUrl() {
+            // Collect all checked values
+            const checkedValues = [];
+            checkboxes.forEach(cb => {
+                if (cb.checked && cb.value !== '') {
+                    checkedValues.push(cb.value);
+                }
+            });
+            
+            // Build URL with multiple status parameters
+            let url = "{{ route('admin.use-cases.index') }}"; // Update with your actual route
+            
+            // Remove "all" from params if other filters are selected
+            const filteredValues = checkedValues.filter(value => value !== 'all');
+            
+            if (filteredValues.length > 0) {
+                const params = new URLSearchParams();
+                filteredValues.forEach(value => {
+                    params.append('status[]', value);
+                });
+                url += '?' + params.toString();
+            } else if (checkedValues.includes('all') || checkedValues.length === 0) {
+                // If only "all" is checked or nothing is checked, go to base URL
+                url = "{{ route('admin.use-cases.index') }}";
+            }
+            
+            console.log('Use Case filter - Navigating to:', url);
+            window.location.href = url;
+        }
+        
+        // Set initial state - check "all" if no checkboxes are checked
+        const hasChecked = Array.from(checkboxes).some(cb => cb.checked);
+        if (!hasChecked && allCheckbox) {
+            allCheckbox.checked = true;
+        }
+        
+        checkboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                // If this is the "all" checkbox
+                if (this.value === 'all') {
+                    if (this.checked) {
+                        // Uncheck all other checkboxes
+                        checkboxes.forEach(cb => {
+                            if (cb !== this) {
+                                cb.checked = false;
+                            }
+                        });
+                    }
+                } else {
+                    // If a specific checkbox is checked
+                    if (this.checked && allCheckbox) {
+                        allCheckbox.checked = false;
+                    }
+                    
+                    // If all specific checkboxes are unchecked, check "all"
+                    const specificCheckboxes = Array.from(checkboxes).filter(cb => cb.value !== 'all');
+                    const hasSpecificChecked = specificCheckboxes.some(cb => cb.checked);
+                    
+                    if (!hasSpecificChecked && allCheckbox) {
+                        allCheckbox.checked = true;
+                    }
+                }
+                
+                // Wait a moment for UI to update, then update URL
+                setTimeout(updateUseCaseFilterUrl, 50);
+            });
+        });
     });
 </script>
 @endsection

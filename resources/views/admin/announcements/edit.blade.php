@@ -15,7 +15,7 @@
                     </ol>
                 </div>
             </div><!--end page-title-box-->
-        </div><!--end col-->
+        </div>
     </div>
     <div class="row justify-content-center">
         <div class="col-12">
@@ -28,30 +28,24 @@
                     </div>
                 </div>
                 <div class="card-body pt-0">
-
-                    {{-- UPDATE FORM --}}
                     <form action="{{ route('announcements.update', $announcement) }}" method="POST"
                         enctype="multipart/form-data" id="announcementEditForm">
                         @csrf
                         @method('PUT')
-
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Announcement Title</label>
                                 <input type="text" class="form-control" name="title"
                                     value="{{ old('title', $announcement->title) }}">
                             </div>
-
                             <div class="col-md-6">
                                 <label class="form-label">Announcement Category</label>
                                 <input type="text" class="form-control" name="category"
                                     value="{{ old('category', $announcement->category) }}">
                             </div>
-
                             <div class="col-12 mt-3">
                                 <label class="form-label">Attachment</label>
                                 <input type="file" class="form-control" name="attachment">
-
                                 @if ($announcement->attachment)
                                     <div class="mt-2">
                                         <p class="mb-1 text-muted">Current Image:</p>
@@ -61,33 +55,24 @@
                                 @endif
                             </div>
                         </div>
-
                         <label class="form-label">Announcement Content</label>
                         <div id="editor" class="border rounded p-2 mb-3" style="min-height:200px;">
                             {!! old('content', $announcement->content) !!}
                         </div>
                         <textarea name="content" id="content" hidden></textarea>
-
-                        {{-- UPDATE BUTTON --}}
                         <button type="submit" class="btn btn-primary mt-3">
                             Update Announcement
                         </button>
                     </form>
-
-                    {{-- DELETE FORM (Separate) --}}
                     <form action="{{ route('announcements.destroy', $announcement) }}" method="POST"
                         class="delete-announcement-form mt-3 d-flex ">
                         @csrf
                         @method('DELETE')
-
                         <button type="button" class="btn btn-danger btn-delete-announcement">
                             Delete Announcement
                         </button>
                     </form>
-
                 </div>
-
-
             </div>
         </div>
     </div>
@@ -98,30 +83,19 @@
 
 <script>
     document.getElementById('announcementEditForm').addEventListener('submit', function(e) {
-        // Get the editor content
         let editorContent = document.getElementById('editor').innerHTML;
-
-        // Remove Quill tooltip elements
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = editorContent;
-
-        // Remove all .ql-tooltip elements
         const tooltips = tempDiv.querySelectorAll('.ql-tooltip');
         tooltips.forEach(tooltip => tooltip.remove());
-
-        // Set the cleaned content
         document.getElementById('content').value = tempDiv.innerHTML;
     });
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-
         document.querySelectorAll('.btn-delete-announcement').forEach(function(button) {
-
             button.addEventListener('click', function() {
-
                 const form = this.closest('form');
-
                 Swal.fire({
                     title: 'Are you sure?',
                     text: 'This announcement will be permanently deleted!',
@@ -136,12 +110,8 @@
                         form.submit();
                     }
                 });
-
             });
-
         });
-
     });
 </script>
-
 @endsection

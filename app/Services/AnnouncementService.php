@@ -12,7 +12,6 @@ class AnnouncementService
         if (isset($data['attachment'])) {
             $data['attachment'] = $data['attachment']->store('admin/announcements/image', 'public');
         }
-
         return Announcement::create($data);
     }
 
@@ -41,7 +40,6 @@ class AnnouncementService
         ) {
             Storage::disk('public')->delete($announcement->attachment);
         }
-
         return $announcement->delete();
     }
 }

@@ -12,7 +12,6 @@ class CheckPermission
         if ($module && !auth()->user()->canAccess($module, $action)) {
             abort(403);
         }
-
         return $next($request);
     }
 }

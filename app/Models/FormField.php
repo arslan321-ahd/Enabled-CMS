@@ -20,4 +20,8 @@ class FormField extends Model
     protected $casts = [
         'options' => 'array'
     ];
+    public function form()
+    {
+        return $this->belongsTo(Form::class);
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Module;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -22,31 +23,48 @@ class BranchService
     }
     public function update(User $branch, array $data): User
     {
-        // Check if password is provided
         if (!empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         } else {
-            // Remove password from data array to keep old password
             unset($data['password']);
         }
-
         $branch->update($data);
-
         return $branch;
     }
 
-    public function list($status = null)
+    public function list($statuses = [])
     {
-        $query = User::query();
-
-        if ($status === 'active') {
-            $query->where('status', 1);
-        } elseif ($status === 'inactive') {
-            $query->where('status', 0);
-        } elseif ($status === 'new') {
-            $query->whereDate('created_at', '>=', now()->subDays(7));
+        if (!is_array($statuses)) {
+            $statuses = $statuses ? [$statuses] : [];
         }
-
+        $statuses = array_filter($statuses, function ($status) {
+            return $status !== 'all';
+        });
+        $query = User::query();
+        if (!empty($statuses)) {
+            $query->where(function ($q) use ($statuses) {
+                $hasCondition = false;
+                if (in_array('new', $statuses)) {
+                    $q->whereDate('created_at', '>=', Carbon::now()->subDays(7));
+                    $hasCondition = true;
+                }
+                if (in_array('active', $statuses)) {
+                    if ($hasCondition) {
+                        $q->orWhere('status', 1);
+                    } else {
+                        $q->where('status', 1);
+                        $hasCondition = true;
+                    }
+                }
+                if (in_array('inactive', $statuses)) {
+                    if ($hasCondition) {
+                        $q->orWhere('status', 0);
+                    } else {
+                        $q->where('status', 0);
+                    }
+                }
+            });
+        }
         return $query->latest()->get();
     }
 
@@ -55,21 +73,16 @@ class BranchService
         DB::table('module_user_permissions')
             ->where('user_id', $userId)
             ->delete();
-
         if (empty($modules)) {
             return;
         }
-
         $permissionsToInsert = [];
-
         foreach ($modules as $moduleId => $actions) {
             $moduleId = (int) $moduleId;
-
             $hasView   = !empty($actions['view'])   && $actions['view'] == '1';
             $hasCreate = !empty($actions['create']) && $actions['create'] == '1';
             $hasEdit   = !empty($actions['edit'])   && $actions['edit'] == '1';
             $hasDelete = !empty($actions['delete']) && $actions['delete'] == '1';
-
             if ($hasView || $hasCreate || $hasEdit || $hasDelete) {
                 $permissionsToInsert[] = [
                     'user_id'    => $userId,
@@ -83,7 +96,6 @@ class BranchService
                 ];
             }
         }
-
         if (!empty($permissionsToInsert)) {
             DB::table('module_user_permissions')->insert($permissionsToInsert);
         }

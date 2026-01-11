@@ -17,9 +17,56 @@ class BrandController extends Controller
         $this->brandService = $brandService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $brands = Brand::latest()->get();
+        // Get status array from request
+        $statuses = $request->input('status', []);
+
+        // Convert to array if it's a string (for backward compatibility)
+        if (!is_array($statuses)) {
+            $statuses = $statuses ? [$statuses] : [];
+        }
+
+        // Remove 'all' from statuses as it means no filter
+        $statuses = array_filter($statuses, function ($status) {
+            return $status !== 'all';
+        });
+
+        // Query brands
+        $query = Brand::query();
+
+        if (!empty($statuses)) {
+            $query->where(function ($q) use ($statuses) {
+                $hasCondition = false;
+
+                if (in_array('active', $statuses)) {
+                    // Assuming brands have a 'status' field where 1 = active
+                    // If your field name is different, adjust accordingly
+                    $statusField = 'status'; // Change this if your field name is different
+
+                    if ($hasCondition) {
+                        $q->orWhere($statusField, 1);
+                    } else {
+                        $q->where($statusField, 1);
+                        $hasCondition = true;
+                    }
+                }
+
+                if (in_array('inactive', $statuses)) {
+                    $statusField = 'status'; // Change this if your field name is different
+
+                    if ($hasCondition) {
+                        $q->orWhere($statusField, 0);
+                    } else {
+                        $q->where($statusField, 0);
+                    }
+                }
+            });
+        }
+
+        // Get the filtered brands
+        $brands = $query->latest()->get();
+
         return view('admin.brands.brands_list', compact('brands'));
     }
     public function store(BrandRequest $request)

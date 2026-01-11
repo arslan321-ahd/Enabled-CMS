@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('form_id')->constrained()->cascadeOnDelete();
             $table->string('label');
             $table->string('name');
-            $table->string('type'); // text, email, number, select, textarea, file
-            $table->json('options')->nullable(); // for select
+            $table->string('type');
+            $table->json('options')->nullable();
             $table->string('validation')->nullable();
             $table->boolean('required')->default(false);
             $table->integer('order')->default(0);

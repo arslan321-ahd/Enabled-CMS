@@ -6,9 +6,6 @@ use App\Models\UseCase;
 
 class UseCaseService
 {
-    /**
-     * Store a new use case.
-     */
     public function store(array $data): UseCase
     {
         return UseCase::create([
@@ -17,10 +14,6 @@ class UseCaseService
             'status'   => $data['status'],
         ]);
     }
-
-    /**
-     * Update an existing use case.
-     */
     public function update(UseCase $useCase, array $data): UseCase
     {
         $useCase->update([
@@ -28,13 +21,8 @@ class UseCaseService
             'name'     => $data['name'],
             'status'   => $data['status'],
         ]);
-
         return $useCase;
     }
-
-    /**
-     * Delete a use case.
-     */
     public function delete(UseCase $useCase): void
     {
         $useCase->delete();

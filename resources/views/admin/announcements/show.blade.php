@@ -13,26 +13,21 @@
                         </span> |
                         <small class="text-muted">{{ $announcement->created_at->format('d M Y') }}</small>
                     </div>
-
                     @if ($announcement->attachment)
                         <div class="mb-3">
                             <img src="{{ asset('storage/' . $announcement->attachment) }}"
                                 alt="{{ $announcement->title }}" class="img-fluid rounded">
                         </div>
                     @endif
-
                     <div class="announcement-content">
                         {!! $announcement->content !!}
                     </div>
-
-
                     <hr>
                     <h5>Author:&nbsp;{{ Auth::user()->name }}</h5>
                     <a href="{{ route('admin.announcements') }}" class="btn btn-secondary mb-3">Back to
                         Announcements</a>
                 </div>
             </div>
-
         </div>
     </div>
 </div>

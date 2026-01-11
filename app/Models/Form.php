@@ -19,6 +19,7 @@ class Form extends Model
         return $this->belongsTo(User::class);
     }
 
+
     public function fields()
     {
         return $this->hasMany(FormField::class);

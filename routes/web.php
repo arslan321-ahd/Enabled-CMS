@@ -62,16 +62,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/add-customer', [FormBuilderController::class, 'create'])->name('forms.create');
     Route::post('/admin/forms/store', [FormBuilderController::class, 'store'])->name('forms.store');
     Route::get('/admin/customers-list',  [FormBuilderController::class, 'index'])->name('admin.forms.index');
-    // Edit form - NEW ROUTES TO ADD
     Route::get('/admin/forms/{id}/edit', [FormBuilderController::class, 'edit'])->name('forms.edit');
     Route::put('/admin/forms/{id}/update', [FormBuilderController::class, 'update'])->name('forms.update');
-
-    // Delete form - NEW ROUTE TO ADD
     Route::delete('/admin/forms/{id}/delete', [FormBuilderController::class, 'destroy'])->name('forms.destroy');
     // Dynamic Form Routes
     Route::get('/admin/forms/{form}/submissions', [DynamicFormController::class, 'showSubmissions'])->name('forms.submissions');
-
-
     // Brands Routes
     Route::prefix('/admin')->name('admin.')->group(function () {
         Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
@@ -93,7 +88,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('/form/{slug}', [DynamicFormController::class, 'showPublic'])->name('form.public');
 Route::post('/form/{slug}', [DynamicFormController::class, 'submit'])
     ->name('form.submit');
-
 // Website Routes
 Route::view('/', 'user.customer_form')->name('customer.form');
 

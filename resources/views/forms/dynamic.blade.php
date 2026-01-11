@@ -146,22 +146,37 @@
                 return response.json();
             })
             .then(data => {
+                // Clear the form after successful submission
+                document.getElementById('dynamicForm').reset();
+                
+                // Uncheck checkboxes (they might not reset with .reset() in some browsers)
+                document.querySelectorAll('#dynamicForm input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                
+                // Show success message
                 Swal.fire({
                     icon: 'success',
                     title: 'Success!',
-                    text: data.message || 'form successfully submit',
+                    text: data.message || 'Form submitted successfully',
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
-                    timer: 3000
+                    timer: 3000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer)
+                        toast.addEventListener('mouseleave', Swal.resumeTimer)
+                    }
                 });
             })
             .catch(error => {
-
                 let message = 'Something went wrong';
 
                 if (error?.errors) {
                     message = Object.values(error.errors)[0][0];
+                } else if (error?.message) {
+                    message = error.message;
                 }
 
                 Swal.fire({
@@ -171,7 +186,8 @@
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
-                    timer: 4000
+                    timer: 4000,
+                    timerProgressBar: true
                 });
             });
     });

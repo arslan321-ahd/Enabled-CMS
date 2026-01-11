@@ -23,12 +23,10 @@ class DynamicFormController extends Controller
     }
     public function showSubmissions(Form $form)
     {
-
         $submissions = FormSubmission::where('form_id', $form->id)
             ->with(['user', 'values.field'])
             ->latest()
             ->paginate(20);
-
         return view('admin.customers.submissions', compact('form', 'submissions'));
     }
     public function showPublic($slug)
@@ -39,7 +37,6 @@ class DynamicFormController extends Controller
             ->firstOrFail();
         $brands   = Brand::where('status', 'active')->get();
         $useCases = UseCase::where('status', 'active')->get();
-
         return view('forms.dynamic', compact('form', 'brands', 'useCases'));
     }
 
@@ -49,67 +46,43 @@ class DynamicFormController extends Controller
             ->where('active', true)
             ->with('fields')
             ->firstOrFail();
-
-        // ------------------------------
-        // Build dynamic validation rules
-        // ------------------------------
         $rules = [];
-
         foreach ($form->fields as $field) {
             $fieldRules = [];
-
             $fieldRules[] = $field->required ? 'required' : 'nullable';
-
             if (in_array($field->type, ['text', 'textarea'])) {
                 $fieldRules[] = 'string';
             }
-
             if ($field->type === 'email') {
                 $fieldRules[] = 'email';
             }
-
             if ($field->type === 'number') {
                 $fieldRules[] = 'numeric';
             }
-
             if ($field->validation) {
                 foreach (explode('|', $field->validation) as $rule) {
                     $rule = trim($rule);
-
                     if ($rule === '255') {
                         $fieldRules[] = 'max:255';
                         continue;
                     }
-
                     if (preg_match('/^(max|min):(\d+)$/', $rule, $m)) {
                         $fieldRules[] = "{$m[1]}:{$m[2]}";
                     }
                 }
             }
-
             $rules[$field->name] = implode('|', array_unique($fieldRules));
         }
-
         $validated = $request->validate($rules);
-
-        // ------------------------------
-        // Logged-in user: overwrite
-        // Guest user: allow multiple
-        // ------------------------------
         if (auth()->check()) {
             FormSubmission::where('form_id', $form->id)
                 ->where('user_id', auth()->id())
                 ->delete();
         }
-
-        // ------------------------------
-        // Create submission
-        // ------------------------------
         $submission = FormSubmission::create([
             'form_id' => $form->id,
             'user_id' => auth()->check() ? auth()->id() : null,
         ]);
-
         foreach ($form->fields as $field) {
             SubmissionValue::create([
                 'submission_id' => $submission->id,
@@ -117,7 +90,6 @@ class DynamicFormController extends Controller
                 'value'         => $validated[$field->name] ?? null,
             ]);
         }
-
         return response()->json([
             'status'  => true,
             'message' => 'Form submitted successfully',

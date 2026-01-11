@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 class TaggingController extends Controller
 {
     protected $taggingService;
-
     public function __construct(TaggingService $taggingService)
     {
         $this->taggingService = $taggingService;
@@ -23,12 +22,9 @@ class TaggingController extends Controller
         $currentStatuses = is_array($statuses) ? $statuses : ($statuses ? [$statuses] : []);
         return view('admin.tagging.tagging_list', compact('taggings', 'currentStatuses'));
     }
-
-
     public function store(TaggingRequest $request)
     {
         $this->taggingService->store($request->validated());
-
         return redirect()->back()->with('status', 'tagging-created');
     }
 
@@ -48,7 +44,6 @@ class TaggingController extends Controller
     public function destroy(Tagging $tagging, TaggingService $taggingService)
     {
         $taggingService->delete($tagging);
-
         return redirect()->back()->with('status', 'tagging-deleted');
     }
 }

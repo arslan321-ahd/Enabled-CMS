@@ -10,36 +10,27 @@ class TaggingService
     {
         return Tagging::create($data);
     }
-
     public function update(Tagging $tagging, array $data): Tagging
     {
         $tagging->update($data);
         return $tagging;
     }
-
     public function delete(Tagging $tagging): bool
     {
         return $tagging->delete();
     }
-
     public function list($statuses = [])
     {
         $query = Tagging::query();
-
         if (!empty($statuses)) {
-            // Handle both array and string input for backward compatibility
             $statusArray = is_array($statuses) ? $statuses : [$statuses];
-
-            // Remove 'all' from the array if present
             $statusArray = array_filter($statusArray, function ($status) {
                 return $status !== 'all';
             });
-
             if (!empty($statusArray)) {
                 $query->whereIn('status', $statusArray);
             }
         }
-
         return $query->latest()->get();
     }
 }

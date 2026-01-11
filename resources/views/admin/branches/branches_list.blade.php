@@ -5,10 +5,9 @@
 @php
     $canEdit = auth()->user()->canAccess('branches', 'edit');
     $canDelete = auth()->user()->canAccess('branches', 'delete');
-    $canCreate = auth()->user()->canAccess('branches', 'create'); // optional for create buttons
-    $hasActions = $canEdit || $canDelete || auth()->user()->isAdmin(); // include admin
+    $canCreate = auth()->user()->canAccess('branches', 'create');
+    $hasActions = $canEdit || $canDelete || auth()->user()->isAdmin();
 @endphp
-
 <div class="container-fluid">
     <div class="row">
         <div class="col-sm-12">
@@ -42,24 +41,28 @@
                                     <div class="dropdown-menu dropdown-menu-start">
                                         <div class="p-2">
                                             <div class="form-check mb-2">
-                                                <input type="checkbox" class="branch-filter" value=""
-                                                    {{ empty($currentStatus) ? 'checked' : '' }}>
-                                                <label class="form-check-label">All</label>
+                                                <input type="checkbox" class="branch-filter" value="all"
+                                                    id="branch-all"
+                                                    {{ empty($status) && empty(request('status')) ? 'checked' : (in_array('all', (array) request('status', [])) ? 'checked' : '') }}>
+                                                <label class="form-check-label" for="branch-all">All</label>
                                             </div>
                                             <div class="form-check mb-2">
                                                 <input type="checkbox" class="branch-filter" value="new"
-                                                    {{ $currentStatus === 'new' ? 'checked' : '' }}>
-                                                <label class="form-check-label">New</label>
+                                                    id="branch-new"
+                                                    {{ in_array('new', (array) request('status', [])) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="branch-new">New</label>
                                             </div>
                                             <div class="form-check mb-2">
                                                 <input type="checkbox" class="branch-filter" value="active"
-                                                    {{ $currentStatus === 'active' ? 'checked' : '' }}>
-                                                <label class="form-check-label">Active</label>
+                                                    id="branch-active"
+                                                    {{ in_array('active', (array) request('status', [])) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="branch-active">Active</label>
                                             </div>
                                             <div class="form-check">
                                                 <input type="checkbox" class="branch-filter" value="inactive"
-                                                    {{ $currentStatus === 'inactive' ? 'checked' : '' }}>
-                                                <label class="form-check-label">Inactive</label>
+                                                    id="branch-inactive"
+                                                    {{ in_array('inactive', (array) request('status', [])) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="branch-inactive">Inactive</label>
                                             </div>
                                         </div>
                                     </div>
@@ -73,314 +76,304 @@
                                     </div>
                                 @endif
                             </form>
-                        </div><!--end col-->
-                    </div><!--end row-->
-                </div><!--end card-header-->
-                <div class="card-body pt-0">
-                    <div class="table-responsive">
-                        <table class="table mb-0 checkbox-all" id="datatable_1">
-                            <thead class="table-light">
+                        </div>
+                        < </div>
+                    </div>
+                    <div class="card-body pt-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0 checkbox-all" id="datatable_1">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-0" style="width: 16px;">
+                                            ID
+                                        </th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                        <th>Role</th>
+                                        <th>Created At</th>
+                                        @if ($hasActions)
+                                            <th>Action</th>
+                                        @endif
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($branches as $key => $branch)
+                                        <tr>
+                                            <td style="width: 16px;">
+                                                {{ $key + 1 }}
+                                            </td>
+                                            <td class="ps-0">
+                                                <div class="d-flex align-items-center">
+                                                    <span
+                                                        class="thumb-lg d-flex justify-content-center align-items-center 
+         bg-purple-subtle text-purple rounded-circle me-2">
+                                                        @php
+                                                            $words = explode(' ', $branch->name);
+                                                            $initials = '';
+                                                            foreach ($words as $word) {
+                                                                $initials .= strtoupper(substr($word, 0, 1));
+                                                            }
+                                                        @endphp
+                                                        {{ $initials }}
+                                                    </span>
+                                                    <span class="font-13 fw-medium">{{ $branch->name }}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a href="mailto:{{ $branch->email }}"
+                                                    class="d-inline-block align-middle mb-0 text-body">
+                                                    {{ $branch->email }}
+                                                </a>
+                                            </td>
+                                            <td>{{ $branch->phone ?? '-' }}</td>
+                                            <td>
+                                                @if ($branch->status == 1)
+                                                    <span
+                                                        class="badge bg-success-subtle text-success px-2">Active</span>
+                                                @else
+                                                    <span
+                                                        class="badge bg-danger-subtle text-danger px-2">Inactive</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if ($branch->role === 'admin')
+                                                    <span class="badge bg-primary-subtle text-primary px-2">Admin</span>
+                                                @else
+                                                    <span class="badge bg-secondary-subtle text-danger px-2">User</span>
+                                                @endif
+                                            </td>
+                                            <td>{{ $branch->created_at->format('d M Y h:i A') }}</td>
+                                            <td>
+                                                @if (auth()->user()->isAdmin())
+                                                    <a href="#" class="btn btn-sm btn-secondary"
+                                                        data-bs-toggle="modal" data-bs-target="#permissionModal"
+                                                        data-user-id="{{ $branch->id }}">
+                                                        <i class="fa-solid fa-gear"></i>
+                                                    </a>
+                                                @endif
+                                                @if (auth()->user()->canAccess('branches', 'edit'))
+                                                    <a href="javascript:void(0);"
+                                                        class="btn btn-sm btn-primary editBranchBtn"
+                                                        data-id="{{ $branch->id }}" data-name="{{ $branch->name }}"
+                                                        data-email="{{ $branch->email }}"
+                                                        data-phone="{{ $branch->phone }}"
+                                                        data-role="{{ $branch->role }}"
+                                                        data-status="{{ $branch->status }}" data-bs-toggle="modal"
+                                                        data-bs-target="#editBranchModal">
+                                                        <i class="fa-solid fa-pen-to-square"></i>
+                                                    </a>
+                                                @endif
+                                                @if (auth()->user()->canAccess('branches', 'delete'))
+                                                    <form action="{{ route('branches.destroy', $branch->id) }}"
+                                                        method="POST" class="d-inline-block delete-form">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            <i class="fa-solid fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="addBranch" tabindex="-1" aria-labelledby="addBranchLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title text-dark" id="addBranchLabel">Add Branch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="{{ route('admin.branches.store') }}">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" name="name" placeholder="Enter full name"
+                                required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email"
+                                placeholder="Enter email address" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" name="phone"
+                                placeholder="Enter phone number">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Role</label>
+                            <select name="role" class="form-select">
+                                <option value="user" selected>User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="1" selected>Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" name="password" placeholder="Enter password"
+                                required>
+                            <ul class="small text-muted mb-0">
+                                <li>Minimum 8 characters</li>
+                                <li>At least 1 uppercase letter (A–Z)</li>
+                                <li>At least 1 lowercase letter (a–z)</li>
+                                <li>At least 1 number (0–9)</li>
+                                <li>At least 1 special character (!@#$%^&*)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="editBranchModal" tabindex="-1" aria-labelledby="editBranchLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title text-dark" id="editBranchLabel">Edit Branch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" id="editBranchForm">
+                    @csrf
+                    <div class="modal-body">
+                        <input type="hidden" name="branch_id" id="branch_id">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" name="name" id="edit_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" id="edit_email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" name="phone" id="edit_phone">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Role</label>
+                            <select name="role" class="form-select" id="edit_role">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select" id="edit_status">
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password <small>(leave blank to keep current)</small></label>
+                            <input type="password" class="form-control" name="password" id="edit_password">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="updateBranchBtn">
+                            <span id="updateBtnText">Update</span>
+                            <span id="updateBtnSpinner" class="spinner-border spinner-border-sm ms-2 d-none"
+                                role="status" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="permissionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Module Permissions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="permissionForm" action="{{ route('admin.permissions.store') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="user_id" id="permission_user_id">
+                    <div class="modal-body">
+                        <div id="permissionsLoading" class="text-center d-none">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading permissions...</p>
+                        </div>
+                        <table class="table" id="permissionsTable">
+                            <thead>
                                 <tr>
-                                    <th class="ps-0" style="width: 16px;">
-                                        ID
-                                    </th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>Status</th>
-                                    <th>Role</th>
-                                    <th>Created At</th>
-                                    @if ($hasActions)
-                                        <th>Action</th>
-                                    @endif
+                                    <th>Module</th>
+                                    <th>View</th>
+                                    <th>Create</th>
+                                    <th>Edit</th>
+                                    <th>Delete</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @foreach ($branches as $key => $branch)
-                                    <tr>
-                                        <td style="width: 16px;">
-                                            {{ $key + 1 }}
-                                        </td>
-                                        <td class="ps-0">
-                                            <div class="d-flex align-items-center">
-                                                <span
-                                                    class="thumb-lg d-flex justify-content-center align-items-center 
-         bg-purple-subtle text-purple rounded-circle me-2">
-                                                    @php
-                                                        $words = explode(' ', $branch->name);
-                                                        $initials = '';
-                                                        foreach ($words as $word) {
-                                                            $initials .= strtoupper(substr($word, 0, 1));
-                                                        }
-                                                    @endphp
-                                                    {{ $initials }}
-                                                </span>
-                                                <span class="font-13 fw-medium">{{ $branch->name }}</span>
-                                            </div>
+                            <tbody id="permissionsTableBody">
+                                @foreach ($modules as $module)
+                                    <tr data-module-id="{{ $module->id }}">
+                                        <td>{{ ucfirst($module->name) }}</td>
+                                        <td>
+                                            <input type="hidden" name="modules[{{ $module->id }}][view]"
+                                                value="0">
+                                            <input type="checkbox" name="modules[{{ $module->id }}][view]"
+                                                value="1" class="perm-checkbox"
+                                                id="module_{{ $module->id }}_view">
                                         </td>
                                         <td>
-                                            <a href="mailto:{{ $branch->email }}"
-                                                class="d-inline-block align-middle mb-0 text-body">
-                                                {{ $branch->email }}
-                                            </a>
-                                        </td>
-                                        <td>{{ $branch->phone ?? '-' }}</td>
-                                        <td>
-                                            @if ($branch->status == 1)
-                                                <span class="badge bg-success-subtle text-success px-2">Active</span>
-                                            @else
-                                                <span class="badge bg-danger-subtle text-danger px-2">Inactive</span>
-                                            @endif
+                                            <input type="hidden" name="modules[{{ $module->id }}][create]"
+                                                value="0">
+                                            <input type="checkbox" name="modules[{{ $module->id }}][create]"
+                                                value="1" class="perm-checkbox"
+                                                id="module_{{ $module->id }}_create">
                                         </td>
                                         <td>
-                                            @if ($branch->role === 'admin')
-                                                <span class="badge bg-primary-subtle text-primary px-2">Admin</span>
-                                            @else
-                                                <span class="badge bg-secondary-subtle text-danger px-2">User</span>
-                                            @endif
+                                            <input type="hidden" name="modules[{{ $module->id }}][edit]"
+                                                value="0">
+                                            <input type="checkbox" name="modules[{{ $module->id }}][edit]"
+                                                value="1" class="perm-checkbox"
+                                                id="module_{{ $module->id }}_edit">
                                         </td>
-                                        <td>{{ $branch->created_at->format('d M Y h:i A') }}</td>
                                         <td>
-
-                                            {{-- Settings (ADMIN ONLY) --}}
-                                            @if (auth()->user()->isAdmin())
-                                                <a href="#" class="btn btn-sm btn-secondary"
-                                                    data-bs-toggle="modal" data-bs-target="#permissionModal"
-                                                    data-user-id="{{ $branch->id }}">
-                                                    <i class="fa-solid fa-gear"></i>
-                                                </a>
-                                            @endif
-
-                                            {{-- Edit --}}
-                                            @if (auth()->user()->canAccess('branches', 'edit'))
-                                                <a href="javascript:void(0);"
-                                                    class="btn btn-sm btn-primary editBranchBtn"
-                                                    data-id="{{ $branch->id }}" data-name="{{ $branch->name }}"
-                                                    data-email="{{ $branch->email }}"
-                                                    data-phone="{{ $branch->phone }}" data-role="{{ $branch->role }}"
-                                                    data-status="{{ $branch->status }}" data-bs-toggle="modal"
-                                                    data-bs-target="#editBranchModal">
-                                                    <i class="fa-solid fa-pen-to-square"></i>
-                                                </a>
-                                            @endif
-
-                                            {{-- Delete --}}
-                                            @if (auth()->user()->canAccess('branches', 'delete'))
-                                                <form action="{{ route('branches.destroy', $branch->id) }}"
-                                                    method="POST" class="d-inline-block delete-form">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-
+                                            <input type="hidden" name="modules[{{ $module->id }}][delete]"
+                                                value="0">
+                                            <input type="checkbox" name="modules[{{ $module->id }}][delete]"
+                                                value="1" class="perm-checkbox"
+                                                id="module_{{ $module->id }}_delete">
                                         </td>
-
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
-                </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" type="submit">Save Permissions</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
-<div class="modal fade" id="addBranch" tabindex="-1" aria-labelledby="addBranchLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title text-dark" id="addBranchLabel">Add Branch</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{{ route('admin.branches.store') }}">
-                @csrf
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" class="form-control" name="name" placeholder="Enter full name"
-                            required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-control" name="email" placeholder="Enter email address"
-                            required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Phone</label>
-                        <input type="text" class="form-control" name="phone" placeholder="Enter phone number">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Role</label>
-                        <select name="role" class="form-select">
-                            <option value="user" selected>User</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select name="status" class="form-select">
-                            <option value="1" selected>Active</option>
-                            <option value="0">Inactive</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <input type="password" class="form-control" name="password" placeholder="Enter password"
-                            required>
-                        <ul class="small text-muted mb-0">
-                            <li>Minimum 8 characters</li>
-                            <li>At least 1 uppercase letter (A–Z)</li>
-                            <li>At least 1 lowercase letter (a–z)</li>
-                            <li>At least 1 number (0–9)</li>
-                            <li>At least 1 special character (!@#$%^&*)</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="editBranchModal" tabindex="-1" aria-labelledby="editBranchLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title text-dark" id="editBranchLabel">Edit Branch</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" id="editBranchForm">
-                @csrf
-                <div class="modal-body">
-                    <input type="hidden" name="branch_id" id="branch_id">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" class="form-control" name="name" id="edit_name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-control" name="email" id="edit_email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Phone</label>
-                        <input type="text" class="form-control" name="phone" id="edit_phone">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Role</label>
-                        <select name="role" class="form-select" id="edit_role">
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select name="status" class="form-select" id="edit_status">
-                            <option value="1">Active</option>
-                            <option value="0">Inactive</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Password <small>(leave blank to keep current)</small></label>
-                        <input type="password" class="form-control" name="password" id="edit_password">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="updateBranchBtn">
-                        <span id="updateBtnText">Update</span>
-                        <span id="updateBtnSpinner" class="spinner-border spinner-border-sm ms-2 d-none"
-                            role="status" aria-hidden="true"></span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="permissionModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Module Permissions</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <form id="permissionForm" action="{{ route('admin.permissions.store') }}" method="POST">
-                @csrf
-                <input type="hidden" name="user_id" id="permission_user_id">
-
-                <div class="modal-body">
-                    <div id="permissionsLoading" class="text-center d-none">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-2">Loading permissions...</p>
-                    </div>
-
-                    <table class="table" id="permissionsTable">
-                        <thead>
-                            <tr>
-                                <th>Module</th>
-                                <th>View</th>
-                                <th>Create</th>
-                                <th>Edit</th>
-                                <th>Delete</th>
-                            </tr>
-                        </thead>
-                        <tbody id="permissionsTableBody">
-                            @foreach ($modules as $module)
-                                <tr data-module-id="{{ $module->id }}">
-                                    <td>{{ ucfirst($module->name) }}</td>
-                                    <td>
-                                        <input type="hidden" name="modules[{{ $module->id }}][view]"
-                                            value="0">
-                                        <input type="checkbox" name="modules[{{ $module->id }}][view]"
-                                            value="1" class="perm-checkbox"
-                                            id="module_{{ $module->id }}_view">
-                                    </td>
-                                    <td>
-                                        <input type="hidden" name="modules[{{ $module->id }}][create]"
-                                            value="0">
-                                        <input type="checkbox" name="modules[{{ $module->id }}][create]"
-                                            value="1" class="perm-checkbox"
-                                            id="module_{{ $module->id }}_create">
-                                    </td>
-                                    <td>
-                                        <input type="hidden" name="modules[{{ $module->id }}][edit]"
-                                            value="0">
-                                        <input type="checkbox" name="modules[{{ $module->id }}][edit]"
-                                            value="1" class="perm-checkbox"
-                                            id="module_{{ $module->id }}_edit">
-                                    </td>
-                                    <td>
-                                        <input type="hidden" name="modules[{{ $module->id }}][delete]"
-                                            value="0">
-                                        <input type="checkbox" name="modules[{{ $module->id }}][delete]"
-                                            value="1" class="perm-checkbox"
-                                            id="module_{{ $module->id }}_delete">
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" type="submit">Save Permissions</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Add this hidden div to pass modules data -->
 <div id="modulesData" data-modules='@json($modules)' style="display: none;"></div>
-
-
-
 <script src="{{ asset('assets/libs/simple-datatables/umd/simple-datatables.js') }}"></script>
 <script src="{{ asset('assets/js/pages/datatable.init.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -390,30 +383,17 @@
         const permissionForm = document.getElementById('permissionForm');
         const permissionsLoading = document.getElementById('permissionsLoading');
         const permissionsTable = document.getElementById('permissionsTable');
-
-        // Store original form HTML to reset
         const originalTableHTML = document.getElementById('permissionsTableBody').innerHTML;
-
         modal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const userId = button.getAttribute('data-user-id');
             const userName = button.closest('tr').querySelector('.font-13.fw-medium')?.textContent ||
                 'User';
-
-            // Update modal title
             modal.querySelector('.modal-title').textContent = `Permissions for ${userName}`;
-
-            // Set user ID in form
             document.getElementById('permission_user_id').value = userId;
-
-            // Reset table to original state
             document.getElementById('permissionsTableBody').innerHTML = originalTableHTML;
-
-            // Hide table, show loading
             permissionsTable.classList.add('d-none');
             permissionsLoading.classList.remove('d-none');
-
-            // Load permissions
             loadUserPermissions(userId);
         });
 
@@ -426,28 +406,20 @@
                     return response.json();
                 })
                 .then(permissions => {
-                    // Hide loading, show table
                     permissionsLoading.classList.add('d-none');
                     permissionsTable.classList.remove('d-none');
-
-                    // Reset all checkboxes first (in case of previous state)
                     document.querySelectorAll('.perm-checkbox').forEach(checkbox => {
                         checkbox.checked = false;
                     });
-
-                    // Set checkboxes based on permissions
                     if (permissions && typeof permissions === 'object') {
                         Object.keys(permissions).forEach(moduleId => {
                             const perms = permissions[moduleId];
-
-                            // Find checkboxes by ID (more reliable than name)
                             const viewCheckbox = document.getElementById(`module_${moduleId}_view`);
                             const createCheckbox = document.getElementById(
                                 `module_${moduleId}_create`);
                             const editCheckbox = document.getElementById(`module_${moduleId}_edit`);
                             const deleteCheckbox = document.getElementById(
                                 `module_${moduleId}_delete`);
-
                             if (viewCheckbox) viewCheckbox.checked = Boolean(perms.can_view);
                             if (createCheckbox) createCheckbox.checked = Boolean(perms.can_create);
                             if (editCheckbox) editCheckbox.checked = Boolean(perms.can_edit);
@@ -456,11 +428,8 @@
                     }
                 })
                 .catch(error => {
-                    // Hide loading, show table even if error
                     permissionsLoading.classList.add('d-none');
                     permissionsTable.classList.remove('d-none');
-
-                    // Show error toast
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
@@ -472,19 +441,14 @@
                     });
                 });
         }
-
-        // Handle form submission
         permissionForm.addEventListener('submit', function(e) {
             e.preventDefault();
-
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML =
                 '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
             submitBtn.disabled = true;
-
             const formData = new FormData(this);
-
             fetch(this.action, {
                     method: 'POST',
                     body: formData,
@@ -512,8 +476,6 @@
                             showConfirmButton: false,
                             timer: 3000
                         });
-
-                        // Close modal after delay
                         setTimeout(() => {
                             const modalInstance = bootstrap.Modal.getInstance(modal);
                             if (modalInstance) modalInstance.hide();
@@ -538,16 +500,12 @@
                     submitBtn.disabled = false;
                 });
         });
-
-        // When modal hides, reset everything
         modal.addEventListener('hidden.bs.modal', function() {
             permissionsLoading.classList.add('d-none');
             permissionsTable.classList.remove('d-none');
         });
     });
 </script>
-
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const Toast = Swal.mixin({
@@ -760,16 +718,56 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const checkboxes = document.querySelectorAll('.branch-filter');
+        const allCheckbox = document.querySelector('.branch-filter[value="all"]');
+
+        function updateFilterUrl() {
+            const checkedValues = [];
+            checkboxes.forEach(cb => {
+                if (cb.checked && cb.value !== '') {
+                    checkedValues.push(cb.value);
+                }
+            });
+            console.log('Checked values:', checkedValues);
+            let url = "{{ route('admin.branches') }}";
+            const filteredValues = checkedValues.filter(value => value !== 'all');
+            if (filteredValues.length > 0) {
+                const params = new URLSearchParams();
+                filteredValues.forEach(value => {
+                    params.append('status[]', value);
+                });
+                url += '?' + params.toString();
+            } else if (checkedValues.includes('all') || checkedValues.length === 0) {
+                url = "{{ route('admin.branches') }}";
+            }
+            console.log('Navigating to:', url);
+            window.location.href = url;
+        }
+        const hasChecked = Array.from(checkboxes).some(cb => cb.checked);
+        if (!hasChecked && allCheckbox) {
+            allCheckbox.checked = true;
+        }
         checkboxes.forEach(function(checkbox) {
             checkbox.addEventListener('change', function() {
-                checkboxes.forEach(cb => cb.checked = false);
-                this.checked = true;
-                const status = this.value;
-                let url = "{{ route('admin.branches') }}";
-                if (status !== '') {
-                    url += '?status=' + status;
+                if (this.value === 'all') {
+                    if (this.checked) {
+                        checkboxes.forEach(cb => {
+                            if (cb !== this) {
+                                cb.checked = false;
+                            }
+                        });
+                    }
+                } else {
+                    if (this.checked && allCheckbox) {
+                        allCheckbox.checked = false;
+                    }
+                    const specificCheckboxes = Array.from(checkboxes).filter(cb => cb.value !==
+                        'all');
+                    const hasSpecificChecked = specificCheckboxes.some(cb => cb.checked);
+                    if (!hasSpecificChecked && allCheckbox) {
+                        allCheckbox.checked = true;
+                    }
                 }
-                window.location.href = url;
+                setTimeout(updateFilterUrl, 50);
             });
         });
     });
