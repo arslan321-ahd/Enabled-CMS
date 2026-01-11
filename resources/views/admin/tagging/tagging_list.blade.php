@@ -48,22 +48,25 @@
                                         <div class="p-2">
                                             <div class="form-check mb-2">
                                                 <input type="checkbox" class="form-check-input filter-checkbox"
-                                                    value="" {{ empty($currentStatus) ? 'checked' : '' }}>
-                                                <label class="form-check-label">
+                                                    value="all" id="filter-all"
+                                                    {{ empty($currentStatuses) ? 'checked' : (in_array('all', $currentStatuses ?? []) ? 'checked' : '') }}>
+                                                <label class="form-check-label" for="filter-all">
                                                     All
                                                 </label>
                                             </div>
                                             <div class="form-check mb-2">
                                                 <input type="checkbox" class="form-check-input filter-checkbox"
-                                                    value="online" {{ $currentStatus === 'online' ? 'checked' : '' }}>
-                                                <label class="form-check-label">
+                                                    value="online" id="filter-online"
+                                                    {{ in_array('online', $currentStatuses ?? []) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="filter-online">
                                                     Online
                                                 </label>
                                             </div>
                                             <div class="form-check">
                                                 <input type="checkbox" class="form-check-input filter-checkbox"
-                                                    value="offline" {{ $currentStatus === 'offline' ? 'checked' : '' }}>
-                                                <label class="form-check-label">
+                                                    value="offline" id="filter-offline"
+                                                    {{ in_array('offline', $currentStatuses ?? []) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="filter-offline">
                                                     Offline
                                                 </label>
                                             </div>
@@ -290,83 +293,83 @@
     });
 </script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
 
-    document.querySelectorAll('.editTaggingBtn').forEach(button => {
-        button.addEventListener('click', function () {
-            const id = this.dataset.id;
+        document.querySelectorAll('.editTaggingBtn').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.dataset.id;
 
-            document.getElementById('edit_source').value = this.dataset.source;
-            document.getElementById('edit_status').value = this.dataset.status;
-            document.getElementById('edit_ref_url').value = this.dataset.ref_url;
+                document.getElementById('edit_source').value = this.dataset.source;
+                document.getElementById('edit_status').value = this.dataset.status;
+                document.getElementById('edit_ref_url').value = this.dataset.ref_url;
 
-            document.getElementById('editTaggingForm').dataset.id = id;
+                document.getElementById('editTaggingForm').dataset.id = id;
 
-            new bootstrap.Modal(document.getElementById('editTaggingModal')).show();
+                new bootstrap.Modal(document.getElementById('editTaggingModal')).show();
+            });
+        });
+
+        document.getElementById('editTaggingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const form = this;
+            const id = form.dataset.id; // ✅ actual tagging ID
+            const formData = new FormData(form);
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+
+            submitBtn.innerHTML = 'Updating...';
+            submitBtn.disabled = true;
+
+            fetch(`/admin/tagging-update/${id}`, { // ✅ FIXED URL
+                    method: 'POST', // ✅ Laravel spoofing
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    bootstrap.Modal.getInstance(
+                        document.getElementById('editTaggingModal')
+                    ).hide();
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message || 'Tagging updated successfully',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+
+                    setTimeout(() => window.location.reload(), 800);
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'Failed to update tagging.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+
+                    console.error(error);
+                });
         });
     });
-
-    document.getElementById('editTaggingForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        const form = this;
-        const id = form.dataset.id; // ✅ actual tagging ID
-        const formData = new FormData(form);
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalBtnText = submitBtn.innerHTML;
-
-        submitBtn.innerHTML = 'Updating...';
-        submitBtn.disabled = true;
-
-        fetch(`/admin/tagging-update/${id}`, {   // ✅ FIXED URL
-            method: 'POST',                      // ✅ Laravel spoofing
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            },
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Network response was not ok');
-            return response.json();
-        })
-        .then(data => {
-            bootstrap.Modal.getInstance(
-                document.getElementById('editTaggingModal')
-            ).hide();
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Success!',
-                text: data.message || 'Tagging updated successfully',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000
-            });
-
-            setTimeout(() => window.location.reload(), 800);
-        })
-        .catch(error => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error!',
-                text: 'Failed to update tagging.',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000
-            });
-
-            submitBtn.innerHTML = originalBtnText;
-            submitBtn.disabled = false;
-
-            console.error(error);
-        });
-    });
-});
 </script>
 
 <script>
@@ -395,15 +398,53 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const checkboxes = document.querySelectorAll('.filter-checkbox');
+
         checkboxes.forEach(function(checkbox) {
             checkbox.addEventListener('change', function() {
-                checkboxes.forEach(cb => cb.checked = false);
-                this.checked = true
-                const status = this.value;
-                let url = "{{ route('admin.tagging.list') }}";
-                if (status !== '') {
-                    url += '?status=' + status;
+                // Handle "All" checkbox logic
+                if (this.value === 'all' && this.checked) {
+                    // Uncheck other checkboxes when "All" is selected
+                    checkboxes.forEach(cb => {
+                        if (cb.value !== 'all') {
+                            cb.checked = false;
+                        }
+                    });
+                } else if (this.value !== 'all' && this.checked) {
+                    // If a specific status is checked, uncheck "All"
+                    const allCheckbox = document.querySelector('.filter-checkbox[value="all"]');
+                    if (allCheckbox) {
+                        allCheckbox.checked = false;
+                    }
                 }
+
+                // Collect all checked values
+                const checkedValues = [];
+                checkboxes.forEach(cb => {
+                    if (cb.checked) {
+                        checkedValues.push(cb.value);
+                    }
+                });
+
+                // Build URL with multiple status parameters
+                let url = "{{ route('admin.tagging.list') }}";
+
+                if (checkedValues.length > 0) {
+                    // Remove "all" from params if other filters are selected
+                    const filteredValues = checkedValues.filter(value => value !== 'all');
+                    const params = new URLSearchParams();
+
+                    if (filteredValues.length > 0) {
+                        filteredValues.forEach(value => {
+                            params.append('status[]', value);
+                        });
+                    }
+
+                    const queryString = params.toString();
+                    if (queryString) {
+                        url += '?' + queryString;
+                    }
+                }
+
                 window.location.href = url;
             });
         });

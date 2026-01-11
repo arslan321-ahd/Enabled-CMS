@@ -22,12 +22,22 @@ class TaggingService
         return $tagging->delete();
     }
 
-    public function list($status = null)
+    public function list($statuses = [])
     {
         $query = Tagging::query();
 
-        if ($status && in_array($status, ['online', 'offline'])) {
-            $query->where('status', $status);
+        if (!empty($statuses)) {
+            // Handle both array and string input for backward compatibility
+            $statusArray = is_array($statuses) ? $statuses : [$statuses];
+
+            // Remove 'all' from the array if present
+            $statusArray = array_filter($statusArray, function ($status) {
+                return $status !== 'all';
+            });
+
+            if (!empty($statusArray)) {
+                $query->whereIn('status', $statusArray);
+            }
         }
 
         return $query->latest()->get();

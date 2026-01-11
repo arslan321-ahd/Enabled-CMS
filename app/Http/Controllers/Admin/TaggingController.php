@@ -18,9 +18,10 @@ class TaggingController extends Controller
     }
     public function index(Request $request, TaggingService $taggingService)
     {
-        $status = $request->get('status');
-        $taggings = $taggingService->list($status);
-        return view('admin.tagging.tagging_list', compact('taggings'));
+        $statuses = $request->get('status', []);
+        $taggings = $taggingService->list($statuses);
+        $currentStatuses = is_array($statuses) ? $statuses : ($statuses ? [$statuses] : []);
+        return view('admin.tagging.tagging_list', compact('taggings', 'currentStatuses'));
     }
 
 
