@@ -73,10 +73,10 @@
                 </div>
                 <div class="card-body pt-0">
                     <div class="table-responsive">
-                        <table class="table mb-0 checkbox-all" id="">
+                        <table class="table mb-0 checkbox-all" id="datatable_1">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-0">ID</th>
+                                    <th class="ps-0" style="width: 16px;">ID</th>
                                     <th>Name</th>
                                     <th>Status</th>
                                     <th>Reference Link</th>
@@ -86,7 +86,7 @@
                             <tbody>
                                 @forelse($brands as $index => $brand)
                                     <tr>
-                                        <td>{{ $index + 1 }}</td>
+                                        <td style="width: 16px;">{{ $index + 1 }}</td>
                                         <td class="ps-0">
                                             <div class="d-flex align-items-center gap-2">
                                                 <img src="{{ asset('storage/' . $brand->logo) }}" width="32"
@@ -230,6 +230,7 @@
 </div>
 <script src="{{ asset('assets/libs/simple-datatables/umd/simple-datatables.js') }}"></script>
 <script src="{{ asset('assets/js/pages/datatable.init.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const Toast = Swal.mixin({
@@ -292,6 +293,7 @@
                 toast.addEventListener('mouseleave', Swal.resumeTimer);
             }
         });
+
         function showLoading(button) {
             if (!button || !button.querySelector) return;
             button.disabled = true;
@@ -300,6 +302,7 @@
             if (submitText) submitText.classList.add('d-none');
             if (spinner) spinner.classList.remove('d-none');
         }
+
         function hideLoading(button) {
             if (!button || !button.querySelector) return;
             button.disabled = false;
@@ -308,6 +311,7 @@
             if (submitText) submitText.classList.remove('d-none');
             if (spinner) spinner.classList.add('d-none');
         }
+
         function showEditButtonLoading(button) {
             if (!button) return;
             const originalHTML = button.innerHTML;
@@ -315,6 +319,7 @@
             button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             button.disabled = true;
         }
+
         function hideEditButtonLoading(button) {
             if (!button) return;
             const originalHTML = button.getAttribute('data-original-html');
@@ -495,6 +500,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const checkboxes = document.querySelectorAll('.brand-filter');
         const allCheckbox = document.querySelector('.brand-filter[value="all"]');
+
         function updateBrandFilterUrl() {
             const checkedValues = [];
             checkboxes.forEach(cb => {

@@ -14,12 +14,15 @@ class FormField extends Model
         'options',
         'validation',
         'required',
-        'order'
+        'order',
+        'data_source',
+        'checkbox_terms'
     ];
 
     protected $casts = [
         'options' => 'array'
     ];
+
     public function form()
     {
         return $this->belongsTo(Form::class);

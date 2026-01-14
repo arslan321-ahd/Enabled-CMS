@@ -99,43 +99,29 @@
                                                 </span>
                                             </div>
                                         </td>
-
-
-                                        {{-- BRANCH NAME --}}
                                         <td>
                                             {{ $form->user->name ?? 'N/A' }}
                                         </td>
-
-                                        {{-- TOTAL FIELDS --}}
                                         <td>
                                             {{ $form->fields_count }}
                                         </td>
-
-                                        {{-- TOTAL SUBMISSIONS --}}
                                         <td>
                                             {{ $form->submissions_count }}
                                         </td>
-
-                                        {{-- FORM LINK --}}
                                         <td>
                                             <a href="{{ route('form.public', $form->slug) }}" target="_blank">
-                                                {{ route('form.public', $form->slug) }}
+                                                🚀 Open
                                             </a>
                                         </td>
-
-
-                                        {{-- ACTIONS --}}
                                         <td>
                                             <a href="{{ route('forms.submissions', $form->id) }}"
                                                 class="btn btn-sm btn-success" title="View Submissions">
                                                 <i class="fa-solid fa-eye"></i>
                                             </a>
-
                                             <a href="{{ route('forms.edit', $form->id) }}"
                                                 class="btn btn-sm btn-primary" title="Edit">
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </a>
-
                                             <form id="delete-form-{{ $form->id }}"
                                                 action="{{ route('forms.destroy', $form->id) }}" method="POST"
                                                 style="display: inline;">
@@ -150,7 +136,6 @@
                                     </tr>
                                 @endforeach
                             </tbody>
-
                         </table>
                     </div>
                 </div>

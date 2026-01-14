@@ -1,6 +1,7 @@
 @extends('admin.partials.layouts')
 @section('content')
 @section('title', 'Use Cases')
+<link href="{{ asset('assets/libs/simple-datatables/style.css') }}" rel="stylesheet" type="text/css" />
 <div class="container-fluid">
     <div class="row">
         <div class="col-sm-12">
@@ -73,10 +74,10 @@
                 </div>
                 <div class="card-body pt-0">
                     <div class="table-responsive">
-                        <table class="table mb-0 checkbox-all" id="">
+                        <table class="table mb-0 checkbox-all" id="datatable_1">
                             <thead class="table-light">
                                 <tr>
-                                    <th>ID</th>
+                                    <th class="ps-0" style="width: 16px;">ID</th>
                                     <th>Name</th>
                                     <th>Brand</th>
                                     <th>Status</th>
@@ -87,7 +88,7 @@
                             <tbody>
                                 @forelse($useCases as $index => $useCase)
                                     <tr>
-                                        <td>{{ $index + 1 }}</td>
+                                        <td style="width: 16px;">{{ $index + 1 }}</td>
                                         <td>{{ $useCase->name }}</td>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">

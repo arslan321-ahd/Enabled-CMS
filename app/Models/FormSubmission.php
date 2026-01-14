@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class FormSubmission extends Model
 {
@@ -48,5 +49,9 @@ class FormSubmission extends Model
     public function logs()
     {
         return $this->morphMany(Log::class, 'loggable');
+    }
+    public function review(): HasOne
+    {
+        return $this->hasOne(FormReview::class, 'form_submission_id');
     }
 }

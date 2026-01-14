@@ -27,7 +27,7 @@
                     </div> <!--end row-->
                 </div><!--end card-header-->
                 <div class="card-body pt-0">
-                    <form method="POST" action="{{ route('forms.store') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ route('forms.store') }}" enctype="multipart/form-data" id="dynamic-form">
                         @csrf
                         <div class="row">
                             <div class="col-4 mb-3">
@@ -51,7 +51,7 @@
                             </div>
                         </div>
                         <div id="fields-wrapper">
-                            <div class="field-group mb-3">
+                            <div class="field-group mb-3 border p-3 rounded">
                                 <div class="row align-items-end">
                                     <div class="col-3">
                                         <label>Field Label</label>
@@ -65,6 +65,7 @@
                                             <option value="number">Number</option>
                                             <option value="textarea">Textarea</option>
                                             <option value="select">Select</option>
+                                            <option value="checkbox">Checkbox</option>
                                         </select>
                                     </div>
                                     <div class="col-3">
@@ -76,7 +77,8 @@
                                     </div>
                                     <div class="col-2 validation-rules d-none">
                                         <label>Validation Rules</label>
-                                        <select name="fields[0][validation_rules][]" class="form-control validation-rules-select" multiple>
+                                        <select name="fields[0][validation_rules][]"
+                                            class="form-control validation-rules-select" multiple>
                                             <option value="required">Required</option>
                                             <option value="string">String</option>
                                             <option value="email">Email</option>
@@ -98,11 +100,47 @@
                                         <button type="button" class="btn btn-danger btn-remove">−</button>
                                     </div>
                                 </div>
+                                <div class="row mt-2 data-source-section d-none">
+                                    <div class="col-12">
+                                        <label class="form-label mb-2">Data Source:</label>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input data-source-radio" type="radio"
+                                                name="fields[0][data_source]" id="field0_data_manual" value="manual"
+                                                checked>
+                                            <label class="form-check-label" for="field0_data_manual">
+                                                Custom
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input data-source-radio" type="radio"
+                                                name="fields[0][data_source]" id="field0_data_database"
+                                                value="database">
+                                            <label class="form-check-label" for="field0_data_database">
+                                                Dynamic
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-2 database-source-section d-none">
+                                    <div class="col-4">
+                                        <label>Select Database Source</label>
+                                        <select name="fields[0][data_source_select]"
+                                            class="form-control database-source-select">
+                                            <option value="">-- Select Source --</option>
+                                            <option value="tagging">Tagging</option>
+                                            <option value="brand">Brand</option>
+                                            <option value="usecases">Use Cases</option>
+                                        </select>
+                                        <small class="text-muted">Data will be fetched from this table when form is
+                                            displayed to users</small>
+                                    </div>
+                                </div>
                                 <div class="row mt-2 select-options d-none">
-                                    <div class="col-11">
+                                    <div class="col-12">
+                                        <label class="form-label mb-2">Custom Options:</label>
                                         <div class="option-row d-flex align-items-center mb-2">
-                                            <input type="text" name="fields[0][options][]" class="form-control me-2"
-                                                placeholder="Option value">
+                                            <input type="text" name="fields[0][options][]"
+                                                class="form-control me-2" placeholder="Option value">
                                             <button type="button" class="btn btn-success btn-option-add me-1"
                                                 title="Add option">
                                                 +
@@ -112,6 +150,15 @@
                                                 −
                                             </button>
                                         </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-2 checkbox-terms-section d-none">
+                                    <div class="col-12">
+                                        <label class="form-label mb-2">Checkbox Terms/Description:</label>
+                                        <textarea name="fields[0][checkbox_terms]" class="form-control" rows="4"
+                                            placeholder="Enter terms and conditions or description for the checkbox. Example: I agree to all the terms and conditions and privacy policy of this website..."></textarea>
+                                        <small class="text-muted">This text will appear next to the checkbox as its
+                                            label/description.</small>
                                     </div>
                                 </div>
                             </div>
@@ -124,100 +171,231 @@
     </div>
 </div>
 <script>
-    let fieldIndex = 1;
-    
-    document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('field-type')) {
-            const group = e.target.closest('.field-group');
-            const options = group.querySelector('.select-options');
-            if (e.target.value === 'select') {
-                options.classList.remove('d-none');
-            } else {
-                options.classList.add('d-none');
+    document.addEventListener('DOMContentLoaded', function() {
+        let fieldIndex = 1;
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('field-type')) {
+                const group = e.target.closest('.field-group');
+                toggleFieldSections(group, e.target.value);
             }
-        }
-        
-        if (e.target.classList.contains('validation-type')) {
-            const group = e.target.closest('.field-group');
-            const validationRules = group.querySelector('.validation-rules');
+            if (e.target.classList.contains('validation-type')) {
+                const group = e.target.closest('.field-group');
+                const validationRules = group.querySelector('.validation-rules');
+                if (e.target.value === 'validation') {
+                    validationRules.classList.remove('d-none');
+                } else {
+                    validationRules.classList.add('d-none');
+                    const rulesSelect = validationRules.querySelector('.validation-rules-select');
+                    if (rulesSelect) {
+                        Array.from(rulesSelect.options).forEach(option => {
+                            option.selected = false;
+                        });
+                    }
+                }
+            }
+            if (e.target.classList.contains('data-source-radio')) {
+                const group = e.target.closest('.field-group');
+                toggleDataSource(group, e.target.value);
+            }
+        });
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-add')) {
+                addNewField();
+            }
+            if (e.target.classList.contains('btn-remove')) {
+                removeField(e.target);
+            }
+            if (e.target.classList.contains('btn-option-add')) {
+                addOption(e.target);
+            }
+            if (e.target.classList.contains('btn-option-remove')) {
+                removeOption(e.target);
+            }
+        });
+        document.getElementById('dynamic-form').addEventListener('submit', function(e) {
+            console.log('Form submitted, checking data...');
+            const formData = new FormData(this);
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+        });
+        function toggleFieldSections(group, fieldType) {
+            group.querySelector('.data-source-section').classList.add('d-none');
+            group.querySelector('.database-source-section').classList.add('d-none');
+            group.querySelector('.select-options').classList.add('d-none');
+            group.querySelector('.checkbox-terms-section').classList.add('d-none');
             
-            if (e.target.value === 'validation') {
-                validationRules.classList.remove('d-none');
-            } else {
-                validationRules.classList.add('d-none');
-                // Clear selected rules when switching to nullable
-                const rulesSelect = validationRules.querySelector('.validation-rules-select');
-                rulesSelect.selectedIndex = -1;
+            // Reset radio buttons for select
+            if (group.querySelector('.data-source-radio[value="manual"]')) {
+                group.querySelector('.data-source-radio[value="manual"]').checked = true;
+            }
+            if (fieldType === 'select') {
+                group.querySelector('.data-source-section').classList.remove('d-none');
+                group.querySelector('.select-options').classList.remove('d-none');
+            } else if (fieldType === 'checkbox') {
+                group.querySelector('.checkbox-terms-section').classList.remove('d-none');
             }
         }
-    });
-    
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('btn-add')) {
+        function toggleDataSource(group, dataSourceValue) {
+            const databaseSection = group.querySelector('.database-source-section');
+            const selectOptions = group.querySelector('.select-options');
+            
+            if (dataSourceValue === 'database') {
+                databaseSection.classList.remove('d-none');
+                selectOptions.classList.add('d-none');
+            } else {
+                databaseSection.classList.add('d-none');
+                selectOptions.classList.remove('d-none');
+            }
+        }
+        function addNewField() {
             const wrapper = document.getElementById('fields-wrapper');
             const firstGroup = document.querySelector('.field-group');
             const clone = firstGroup.cloneNode(true);
-            
-            // Update all names with new index
-            clone.querySelectorAll('input, select').forEach(el => {
+            clone.querySelectorAll('input, select, textarea').forEach(el => {
                 const name = el.getAttribute('name');
                 if (name) {
                     el.setAttribute('name', name.replace('[0]', `[${fieldIndex}]`));
                 }
-            });
-            
-            // Reset values
-            clone.querySelectorAll('input[type="text"]').forEach(el => el.value = '');
-            clone.querySelectorAll('select').forEach(el => {
-                if (el.classList.contains('field-type') || el.classList.contains('validation-type')) {
-                    el.selectedIndex = 0;
-                } else if (el.classList.contains('validation-rules-select')) {
-                    el.selectedIndex = -1;
+                const id = el.getAttribute('id');
+                if (id && id.includes('field0')) {
+                    el.setAttribute('id', id.replace('field0', `field${fieldIndex}`));
                 }
             });
-            
-            // Hide options and validation rules by default
-            clone.querySelector('.select-options').classList.add('d-none');
-            clone.querySelector('.validation-rules').classList.add('d-none');
-            
+            clone.querySelectorAll('label[for*="field0"]').forEach(label => {
+                const forAttr = label.getAttribute('for');
+                if (forAttr) {
+                    label.setAttribute('for', forAttr.replace('field0', `field${fieldIndex}`));
+                }
+            });
+            clone.querySelectorAll('input[type="text"]').forEach(el => el.value = '');
+            clone.querySelectorAll('textarea').forEach(el => el.value = '');
+            clone.querySelectorAll('input[type="radio"]').forEach(el => {
+                el.checked = el.value === 'manual';
+            });
+            clone.querySelectorAll('select').forEach(el => {
+                if (el.classList.contains('field-type')) {
+                    el.selectedIndex = 0; // "text"
+                } else if (el.classList.contains('validation-type')) {
+                    el.selectedIndex = 0; // "nullable"
+                } else if (el.classList.contains('database-source-select')) {
+                    el.selectedIndex = 0;
+                } else if (el.classList.contains('validation-rules-select')) {
+                    Array.from(el.options).forEach(option => {
+                        option.selected = false;
+                    });
+                }
+            });
+            const selectOptionsDiv = clone.querySelector('.select-options');
+            if (selectOptionsDiv) {
+                const optionRows = selectOptionsDiv.querySelectorAll('.option-row');
+                if (optionRows.length > 1) {
+                    for (let i = 1; i < optionRows.length; i++) {
+                        optionRows[i].remove();
+                    }
+                }
+                if (optionRows.length > 0) {
+                    optionRows[0].querySelector('input').value = '';
+                }
+            }
+            const validationRules = clone.querySelector('.validation-rules');
+            if (validationRules) {
+                validationRules.classList.add('d-none');
+            }
+            const databaseSourceSection = clone.querySelector('.database-source-section');
+            if (databaseSourceSection) {
+                databaseSourceSection.classList.add('d-none');
+            }
+            const dataSourceSection = clone.querySelector('.data-source-section');
+            if (dataSourceSection) {
+                dataSourceSection.classList.add('d-none');
+            }
+            const checkboxTermsSection = clone.querySelector('.checkbox-terms-section');
+            if (checkboxTermsSection) {
+                checkboxTermsSection.classList.add('d-none');
+            }
+            const selectOptionsSection = clone.querySelector('.select-options');
+            if (selectOptionsSection) {
+                selectOptionsSection.classList.add('d-none');
+            }
+            toggleFieldSections(clone, 'text');
             wrapper.appendChild(clone);
             fieldIndex++;
         }
-        
-        if (e.target.classList.contains('btn-remove')) {
+        function removeField(button) {
             const groups = document.querySelectorAll('.field-group');
             if (groups.length > 1) {
-                e.target.closest('.field-group').remove();
+                button.closest('.field-group').remove();
+                reindexFields();
             }
         }
-        
-        if (e.target.classList.contains('btn-option-add')) {
-            const row = e.target.closest('.option-row');
+        function addOption(button) {
+            const row = button.closest('.option-row');
             const parentDiv = row.parentNode;
             const fieldGroup = row.closest('.field-group');
             const fieldName = fieldGroup.querySelector('input[name*="[label]"]').getAttribute('name');
             const fieldIndexMatch = fieldName.match(/\[(\d+)\]/);
             const currentIndex = fieldIndexMatch ? fieldIndexMatch[1] : '0';
-            
             const clone = row.cloneNode(true);
             clone.querySelector('input').value = '';
-            
-            // Update the name attribute for the new option
             const optionInput = clone.querySelector('input[name*="[options]"]');
             const currentName = optionInput.getAttribute('name');
             const newName = currentName.replace(/\[\d+\]\[\d+\]/, `[${currentIndex}][${Date.now()}]`);
             optionInput.setAttribute('name', newName);
-            
             parentDiv.appendChild(clone);
         }
-        
-        if (e.target.classList.contains('btn-option-remove')) {
-            const rows = e.target.closest('.select-options').querySelectorAll('.option-row');
-            if (rows.length > 1) {
-                e.target.closest('.option-row').remove();
+        function removeOption(button) {
+            const selectOptionsDiv = button.closest('.select-options');
+            if (selectOptionsDiv) {
+                const rows = selectOptionsDiv.querySelectorAll('.option-row');
+                if (rows.length > 1) {
+                    button.closest('.option-row').remove();
+                }
+            }
+        }
+        function reindexFields() {
+            const groups = document.querySelectorAll('.field-group');
+            fieldIndex = 0;
+            groups.forEach((group, index) => {
+                group.querySelectorAll('input, select, textarea').forEach(el => {
+                    const name = el.getAttribute('name');
+                    if (name) {
+                        const match = name.match(/fields\[(\d+)\]/);
+                        if (match) {
+                            const oldIndex = match[1];
+                            const newName = name.replace(`[${oldIndex}]`, `[${index}]`);
+                            el.setAttribute('name', newName);
+                        }
+                    }
+                    const id = el.getAttribute('id');
+                    if (id && id.includes('field')) {
+                        const newId = id.replace(/field\d+/, `field${index}`);
+                        el.setAttribute('id', newId);
+                    }
+                });
+                group.querySelectorAll('label[for*="field"]').forEach(label => {
+                    const forAttr = label.getAttribute('for');
+                    if (forAttr) {
+                        const newFor = forAttr.replace(/field\d+/, `field${index}`);
+                        label.setAttribute('for', newFor);
+                    }
+                });
+                fieldIndex++;
+            });
+        }
+        const firstField = document.querySelector('.field-group');
+        if (firstField) {
+            toggleFieldSections(firstField, 'text');
+            // Make sure first field starts with nullable validation type
+            const validationTypeSelect = firstField.querySelector('.validation-type');
+            if (validationTypeSelect) {
+                validationTypeSelect.selectedIndex = 0; // "nullable"
+            }
+            const validationRules = firstField.querySelector('.validation-rules');
+            if (validationRules) {
+                validationRules.classList.add('d-none');
             }
         }
     });
 </script>
-
 @endsection

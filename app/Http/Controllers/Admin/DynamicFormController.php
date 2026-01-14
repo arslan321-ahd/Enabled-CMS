@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Form;
+use App\Models\FormReview;
 use App\Models\FormSubmission;
 use App\Models\SubmissionValue;
 use App\Models\UseCase;
@@ -24,11 +25,18 @@ class DynamicFormController extends Controller
     public function showSubmissions(Form $form)
     {
         $submissions = FormSubmission::where('form_id', $form->id)
-            ->with(['user', 'values.field'])
+            ->with([
+                'user',
+                'values.field',
+                'review' // ✅ REQUIRED
+            ])
             ->latest()
             ->paginate(20);
+
         return view('admin.customers.submissions', compact('form', 'submissions'));
     }
+
+
     public function showPublic($slug)
     {
         $form = Form::where('slug', $slug)
@@ -74,11 +82,11 @@ class DynamicFormController extends Controller
             $rules[$field->name] = implode('|', array_unique($fieldRules));
         }
         $validated = $request->validate($rules);
-        if (auth()->check()) {
-            FormSubmission::where('form_id', $form->id)
-                ->where('user_id', auth()->id())
-                ->delete();
-        }
+        // if (auth()->check()) {
+        //     FormSubmission::where('form_id', $form->id)
+        //         ->where('user_id', auth()->id())
+        //         ->delete();
+        // }
         $submission = FormSubmission::create([
             'form_id' => $form->id,
             'user_id' => auth()->check() ? auth()->id() : null,
@@ -91,8 +99,41 @@ class DynamicFormController extends Controller
             ]);
         }
         return response()->json([
+            'status'        => true,
+            'message'       => 'Form submitted successfully',
+            'submission_id' => $submission->id,
+        ]);
+    }
+    public function submitReview(Request $request)
+    {
+        $validated = $request->validate([
+            'submission_id' => ['required', 'exists:form_submissions,id'],
+            'rating'        => ['nullable', 'integer', 'min:1', 'max:5'],
+            'comment'       => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        // Prevent duplicate reviews for the same submission
+        $alreadyReviewed = FormReview::where(
+            'form_submission_id',
+            $validated['submission_id']
+        )->exists();
+
+        if ($alreadyReviewed) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Review already submitted for this form.',
+            ], 409);
+        }
+
+        FormReview::create([
+            'form_submission_id' => $validated['submission_id'],
+            'rating'             => $validated['rating'],
+            'comment'            => $validated['comment'],
+        ]);
+
+        return response()->json([
             'status'  => true,
-            'message' => 'Form submitted successfully',
+            'message' => 'Review submitted successfully',
         ]);
     }
 }

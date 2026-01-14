@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('form_submissions', function (Blueprint $table) {
+        Schema::create('form_reviews', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('form_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('form_submission_id')->constrained('form_submissions')->cascadeOnDelete();
+            $table->integer('rating')->nullable()->comment('1-5 rating (1=😡, 5=😄)');
+            $table->text('comment')->nullable();
             $table->timestamps();
-            $table->index(['form_id', 'created_at']);
         });
     }
 
@@ -25,6 +25,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('form_submissions');
+        Schema::table('form_reviews', function (Blueprint $table) {
+            //
+        });
     }
 };

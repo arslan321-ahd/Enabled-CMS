@@ -372,404 +372,403 @@
             </div>
         </div>
     </div>
-</div>
-<div id="modulesData" data-modules='@json($modules)' style="display: none;"></div>
-<script src="{{ asset('assets/libs/simple-datatables/umd/simple-datatables.js') }}"></script>
-<script src="{{ asset('assets/js/pages/datatable.init.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('permissionModal');
-        const permissionForm = document.getElementById('permissionForm');
-        const permissionsLoading = document.getElementById('permissionsLoading');
-        const permissionsTable = document.getElementById('permissionsTable');
-        const originalTableHTML = document.getElementById('permissionsTableBody').innerHTML;
-        modal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const userId = button.getAttribute('data-user-id');
-            const userName = button.closest('tr').querySelector('.font-13.fw-medium')?.textContent ||
-                'User';
-            modal.querySelector('.modal-title').textContent = `Permissions for ${userName}`;
-            document.getElementById('permission_user_id').value = userId;
-            document.getElementById('permissionsTableBody').innerHTML = originalTableHTML;
-            permissionsTable.classList.add('d-none');
-            permissionsLoading.classList.remove('d-none');
-            loadUserPermissions(userId);
-        });
+    <div id="modulesData" data-modules='@json($modules)' style="display: none;"></div>
+    <script src="{{ asset('assets/libs/simple-datatables/umd/simple-datatables.js') }}"></script>
+    <script src="{{ asset('assets/js/pages/datatable.init.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('permissionModal');
+            const permissionForm = document.getElementById('permissionForm');
+            const permissionsLoading = document.getElementById('permissionsLoading');
+            const permissionsTable = document.getElementById('permissionsTable');
+            const originalTableHTML = document.getElementById('permissionsTableBody').innerHTML;
+            modal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const userId = button.getAttribute('data-user-id');
+                const userName = button.closest('tr').querySelector('.font-13.fw-medium')?.textContent ||
+                    'User';
+                modal.querySelector('.modal-title').textContent = `Permissions for ${userName}`;
+                document.getElementById('permission_user_id').value = userId;
+                document.getElementById('permissionsTableBody').innerHTML = originalTableHTML;
+                permissionsTable.classList.add('d-none');
+                permissionsLoading.classList.remove('d-none');
+                loadUserPermissions(userId);
+            });
 
-        function loadUserPermissions(userId) {
-            fetch(`/admin/users/${userId}/permissions`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then(permissions => {
-                    permissionsLoading.classList.add('d-none');
-                    permissionsTable.classList.remove('d-none');
-                    document.querySelectorAll('.perm-checkbox').forEach(checkbox => {
-                        checkbox.checked = false;
-                    });
-                    if (permissions && typeof permissions === 'object') {
-                        Object.keys(permissions).forEach(moduleId => {
-                            const perms = permissions[moduleId];
-                            const viewCheckbox = document.getElementById(`module_${moduleId}_view`);
-                            const createCheckbox = document.getElementById(
-                                `module_${moduleId}_create`);
-                            const editCheckbox = document.getElementById(`module_${moduleId}_edit`);
-                            const deleteCheckbox = document.getElementById(
-                                `module_${moduleId}_delete`);
-                            if (viewCheckbox) viewCheckbox.checked = Boolean(perms.can_view);
-                            if (createCheckbox) createCheckbox.checked = Boolean(perms.can_create);
-                            if (editCheckbox) editCheckbox.checked = Boolean(perms.can_edit);
-                            if (deleteCheckbox) deleteCheckbox.checked = Boolean(perms.can_delete);
+            function loadUserPermissions(userId) {
+                fetch(`/admin/users/${userId}/permissions`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(permissions => {
+                        permissionsLoading.classList.add('d-none');
+                        permissionsTable.classList.remove('d-none');
+                        document.querySelectorAll('.perm-checkbox').forEach(checkbox => {
+                            checkbox.checked = false;
                         });
-                    }
-                })
-                .catch(error => {
-                    permissionsLoading.classList.add('d-none');
-                    permissionsTable.classList.remove('d-none');
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Could not load existing permissions. You can still set new permissions.',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                });
-        }
-        permissionForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML =
-                '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
-            submitBtn.disabled = true;
-            const formData = new FormData(this);
-            fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => {
-                            throw new Error(err.message || 'Failed to save');
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
+                        if (permissions && typeof permissions === 'object') {
+                            Object.keys(permissions).forEach(moduleId => {
+                                const perms = permissions[moduleId];
+                                const viewCheckbox = document.getElementById(`module_${moduleId}_view`);
+                                const createCheckbox = document.getElementById(
+                                    `module_${moduleId}_create`);
+                                const editCheckbox = document.getElementById(`module_${moduleId}_edit`);
+                                const deleteCheckbox = document.getElementById(
+                                    `module_${moduleId}_delete`);
+                                if (viewCheckbox) viewCheckbox.checked = Boolean(perms.can_view);
+                                if (createCheckbox) createCheckbox.checked = Boolean(perms.can_create);
+                                if (editCheckbox) editCheckbox.checked = Boolean(perms.can_edit);
+                                if (deleteCheckbox) deleteCheckbox.checked = Boolean(perms.can_delete);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        permissionsLoading.classList.add('d-none');
+                        permissionsTable.classList.remove('d-none');
                         Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: data.message || 'Permissions saved successfully!',
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Could not load existing permissions. You can still set new permissions.',
                             toast: true,
                             position: 'top-end',
                             showConfirmButton: false,
                             timer: 3000
                         });
-                        setTimeout(() => {
-                            const modalInstance = bootstrap.Modal.getInstance(modal);
-                            if (modalInstance) modalInstance.hide();
-                        }, 1000);
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: data.message || 'Failed to save permissions'
-                        });
-                    }
-                })
-                .catch(error => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: error.message || 'Something went wrong. Please try again.'
                     });
-                })
-                .finally(() => {
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                });
-        });
-        modal.addEventListener('hidden.bs.modal', function() {
-            permissionsLoading.classList.add('d-none');
-            permissionsTable.classList.remove('d-none');
-        });
-    });
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer);
-                toast.addEventListener('mouseleave', Swal.resumeTimer);
             }
-        });
-        @if (session('status') === 'branch-created')
-            Toast.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'Branch added successfully.'
-            });
-        @endif
-        @if (session('status') === 'branch-updated')
-            Toast.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'Branch updated successfully.'
-            });
-        @endif
-        @if (session('status') === 'branch-deleted')
-            Toast.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'Branch deleted successfully.'
-            });
-        @endif
-        @if (session('status') === 'tagging-created')
-            Toast.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'Tagging added successfully.'
-            });
-        @endif
-        @if (session('status') === 'tagging-updated')
-            Toast.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'Tagging updated successfully.'
-            });
-        @endif
-        @if (session('status') === 'tagging-deleted')
-            Toast.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'Tagging deleted successfully.'
-            });
-        @endif
-        @if ($errors->any())
-            Toast.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Please fix the errors and try again.'
-            });
-        @endif
-    });
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const updateForm = document.getElementById('editBranchForm');
-        const updateBtn = document.getElementById('updateBranchBtn');
-        const btnText = document.getElementById('updateBtnText');
-        const spinner = document.getElementById('updateBtnSpinner');
-        updateForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const branchId = document.getElementById('branch_id').value;
-            const formData = new FormData(updateForm);
-            spinner.classList.remove('d-none');
-            btnText.textContent = 'Updating...';
-            updateBtn.disabled = true;
-            fetch(`/admin/branches/${branchId}`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value,
-                        'Accept': 'application/json'
-                    },
-                    body: formData
-                })
-                .then(res => res.json())
-                .then(data => {
-                    spinner.classList.add('d-none');
-                    btnText.textContent = 'Update';
-                    updateBtn.disabled = false;
-                    if (data.success) {
-                        const modal = bootstrap.Modal.getInstance(
-                            document.getElementById('editBranchModal')
-                        );
-                        modal.hide();
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: data.message || 'Branch updated successfully',
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 3000
-                        });
-                        setTimeout(() => location.reload(), 1000);
-                    } else {
+            permissionForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML =
+                    '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+                submitBtn.disabled = true;
+                const formData = new FormData(this);
+                fetch(this.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => {
+                                throw new Error(err.message || 'Failed to save');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: data.message || 'Permissions saved successfully!',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000
+                            });
+                            setTimeout(() => {
+                                const modalInstance = bootstrap.Modal.getInstance(modal);
+                                if (modalInstance) modalInstance.hide();
+                            }, 1000);
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: data.message || 'Failed to save permissions'
+                            });
+                        }
+                    })
+                    .catch(error => {
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
-                            text: data.message || 'Something went wrong.'
+                            text: error.message || 'Something went wrong. Please try again.'
                         });
-                    }
-                })
-                .catch(() => {
-                    spinner.classList.add('d-none');
-                    btnText.textContent = 'Update';
-                    updateBtn.disabled = false;
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Something went wrong. Try again.'
+                    })
+                    .finally(() => {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                     });
-                });
-        });
-    });
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const editButtons = document.querySelectorAll('.editBranchBtn');
-        editButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const id = this.dataset.id;
-                const name = this.dataset.name;
-                const email = this.dataset.email;
-                const phone = this.dataset.phone;
-                const role = this.dataset.role;
-                const status = this.dataset.status;
-                document.getElementById('branch_id').value = id;
-                document.getElementById('edit_name').value = name;
-                document.getElementById('edit_email').value = email;
-                document.getElementById('edit_phone').value = phone;
-                document.getElementById('edit_role').value = role;
-                document.getElementById('edit_status').value = status;
-                document.getElementById('edit_password').value = '';
+            });
+            modal.addEventListener('hidden.bs.modal', function() {
+                permissionsLoading.classList.add('d-none');
+                permissionsTable.classList.remove('d-none');
             });
         });
-    });
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+            @if (session('status') === 'branch-created')
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Branch added successfully.'
+                });
+            @endif
+            @if (session('status') === 'branch-updated')
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Branch updated successfully.'
+                });
+            @endif
+            @if (session('status') === 'branch-deleted')
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Branch deleted successfully.'
+                });
+            @endif
+            @if (session('status') === 'tagging-created')
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Tagging added successfully.'
+                });
+            @endif
+            @if (session('status') === 'tagging-updated')
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Tagging updated successfully.'
+                });
+            @endif
+            @if (session('status') === 'tagging-deleted')
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Tagging deleted successfully.'
+                });
+            @endif
+            @if ($errors->any())
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Please fix the errors and try again.'
+                });
+            @endif
         });
-        document.querySelectorAll('.delete-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const updateForm = document.getElementById('editBranchForm');
+            const updateBtn = document.getElementById('updateBranchBtn');
+            const btnText = document.getElementById('updateBtnText');
+            const spinner = document.getElementById('updateBtnSpinner');
+            updateForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: "This action cannot be undone!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        fetch(form.action, {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRF-TOKEN': form.querySelector(
-                                        'input[name=_token]').value,
-                                    'Accept': 'application/json'
-                                },
-                                body: new FormData(form)
-                            })
-                            .then(res => res.json())
-                            .then(data => {
-                                if (data.success) {
-                                    form.closest('tr').remove();
-                                    Toast.fire({
-                                        icon: 'success',
-                                        title: 'Deleted',
-                                        text: data.message
-                                    });
-                                } else {
+                const branchId = document.getElementById('branch_id').value;
+                const formData = new FormData(updateForm);
+                spinner.classList.remove('d-none');
+                btnText.textContent = 'Updating...';
+                updateBtn.disabled = true;
+                fetch(`/admin/branches/${branchId}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value,
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        spinner.classList.add('d-none');
+                        btnText.textContent = 'Update';
+                        updateBtn.disabled = false;
+                        if (data.success) {
+                            const modal = bootstrap.Modal.getInstance(
+                                document.getElementById('editBranchModal')
+                            );
+                            modal.hide();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: data.message || 'Branch updated successfully',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000
+                            });
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: data.message || 'Something went wrong.'
+                            });
+                        }
+                    })
+                    .catch(() => {
+                        spinner.classList.add('d-none');
+                        btnText.textContent = 'Update';
+                        updateBtn.disabled = false;
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Something went wrong. Try again.'
+                        });
+                    });
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const editButtons = document.querySelectorAll('.editBranchBtn');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const name = this.dataset.name;
+                    const email = this.dataset.email;
+                    const phone = this.dataset.phone;
+                    const role = this.dataset.role;
+                    const status = this.dataset.status;
+                    document.getElementById('branch_id').value = id;
+                    document.getElementById('edit_name').value = name;
+                    document.getElementById('edit_email').value = email;
+                    document.getElementById('edit_phone').value = phone;
+                    document.getElementById('edit_role').value = role;
+                    document.getElementById('edit_status').value = status;
+                    document.getElementById('edit_password').value = '';
+                });
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+            document.querySelectorAll('.delete-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "This action cannot be undone!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, delete it'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch(form.action, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': form.querySelector(
+                                            'input[name=_token]').value,
+                                        'Accept': 'application/json'
+                                    },
+                                    body: new FormData(form)
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        form.closest('tr').remove();
+                                        Toast.fire({
+                                            icon: 'success',
+                                            title: 'Deleted',
+                                            text: data.message
+                                        });
+                                    } else {
+                                        Toast.fire({
+                                            icon: 'error',
+                                            title: 'Error',
+                                            text: data.message
+                                        });
+                                    }
+                                })
+                                .catch(() => {
                                     Toast.fire({
                                         icon: 'error',
                                         title: 'Error',
-                                        text: data.message
+                                        text: 'Something went wrong'
                                     });
-                                }
-                            })
-                            .catch(() => {
-                                Toast.fire({
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: 'Something went wrong'
                                 });
-                            });
-                    }
+                        }
+                    });
                 });
             });
         });
-    });
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const checkboxes = document.querySelectorAll('.branch-filter');
-        const allCheckbox = document.querySelector('.branch-filter[value="all"]');
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('.branch-filter');
+            const allCheckbox = document.querySelector('.branch-filter[value="all"]');
 
-        function updateFilterUrl() {
-            const checkedValues = [];
-            checkboxes.forEach(cb => {
-                if (cb.checked && cb.value !== '') {
-                    checkedValues.push(cb.value);
-                }
-            });
-            console.log('Checked values:', checkedValues);
-            let url = "{{ route('admin.branches') }}";
-            const filteredValues = checkedValues.filter(value => value !== 'all');
-            if (filteredValues.length > 0) {
-                const params = new URLSearchParams();
-                filteredValues.forEach(value => {
-                    params.append('status[]', value);
+            function updateFilterUrl() {
+                const checkedValues = [];
+                checkboxes.forEach(cb => {
+                    if (cb.checked && cb.value !== '') {
+                        checkedValues.push(cb.value);
+                    }
                 });
-                url += '?' + params.toString();
-            } else if (checkedValues.includes('all') || checkedValues.length === 0) {
-                url = "{{ route('admin.branches') }}";
-            }
-            console.log('Navigating to:', url);
-            window.location.href = url;
-        }
-        const hasChecked = Array.from(checkboxes).some(cb => cb.checked);
-        if (!hasChecked && allCheckbox) {
-            allCheckbox.checked = true;
-        }
-        checkboxes.forEach(function(checkbox) {
-            checkbox.addEventListener('change', function() {
-                if (this.value === 'all') {
-                    if (this.checked) {
-                        checkboxes.forEach(cb => {
-                            if (cb !== this) {
-                                cb.checked = false;
-                            }
-                        });
-                    }
-                } else {
-                    if (this.checked && allCheckbox) {
-                        allCheckbox.checked = false;
-                    }
-                    const specificCheckboxes = Array.from(checkboxes).filter(cb => cb.value !==
-                        'all');
-                    const hasSpecificChecked = specificCheckboxes.some(cb => cb.checked);
-                    if (!hasSpecificChecked && allCheckbox) {
-                        allCheckbox.checked = true;
-                    }
+                console.log('Checked values:', checkedValues);
+                let url = "{{ route('admin.branches') }}";
+                const filteredValues = checkedValues.filter(value => value !== 'all');
+                if (filteredValues.length > 0) {
+                    const params = new URLSearchParams();
+                    filteredValues.forEach(value => {
+                        params.append('status[]', value);
+                    });
+                    url += '?' + params.toString();
+                } else if (checkedValues.includes('all') || checkedValues.length === 0) {
+                    url = "{{ route('admin.branches') }}";
                 }
-                setTimeout(updateFilterUrl, 50);
+                console.log('Navigating to:', url);
+                window.location.href = url;
+            }
+            const hasChecked = Array.from(checkboxes).some(cb => cb.checked);
+            if (!hasChecked && allCheckbox) {
+                allCheckbox.checked = true;
+            }
+            checkboxes.forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    if (this.value === 'all') {
+                        if (this.checked) {
+                            checkboxes.forEach(cb => {
+                                if (cb !== this) {
+                                    cb.checked = false;
+                                }
+                            });
+                        }
+                    } else {
+                        if (this.checked && allCheckbox) {
+                            allCheckbox.checked = false;
+                        }
+                        const specificCheckboxes = Array.from(checkboxes).filter(cb => cb.value !==
+                            'all');
+                        const hasSpecificChecked = specificCheckboxes.some(cb => cb.checked);
+                        if (!hasSpecificChecked && allCheckbox) {
+                            allCheckbox.checked = true;
+                        }
+                    }
+                    setTimeout(updateFilterUrl, 50);
+                });
             });
         });
-    });
-</script>
+    </script>
 @endsection

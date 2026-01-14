@@ -88,6 +88,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('/form/{slug}', [DynamicFormController::class, 'showPublic'])->name('form.public');
 Route::post('/form/{slug}', [DynamicFormController::class, 'submit'])
     ->name('form.submit');
+Route::post('/user/review', [DynamicFormController::class, 'submitReview'])->name('user.review');
 // Website Routes
 Route::view('/', 'user.customer_form')->name('customer.form');
 

@@ -27,7 +27,8 @@
                     </div> <!--end row-->
                 </div><!--end card-header-->
                 <div class="card-body pt-0">
-                    <form method="POST" action="{{ route('forms.update', $form->id) }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ route('forms.update', $form->id) }}" enctype="multipart/form-data"
+                        id="edit-form">
                         @csrf
                         @method('PUT')
                         <div class="row">
@@ -64,7 +65,7 @@
                         </div>
                         <div id="fields-wrapper">
                             @foreach ($form->fields as $index => $field)
-                                <div class="field-group mb-3">
+                                <div class="field-group mb-3 border p-3 rounded">
                                     <input type="hidden" name="fields[{{ $index }}][id]"
                                         value="{{ $field->id }}">
                                     <div class="row align-items-end">
@@ -88,6 +89,9 @@
                                                 </option>
                                                 <option value="select"
                                                     {{ $field->type == 'select' ? 'selected' : '' }}>Select</option>
+                                                <option value="checkbox"
+                                                    {{ $field->type == 'checkbox' ? 'selected' : '' }}>Checkbox
+                                                </option>
                                             </select>
                                         </div>
                                         <div class="col-3">
@@ -138,8 +142,7 @@
                                                 });
                                             @endphp
                                             <select name="fields[{{ $index }}][validation_rules][]"
-                                                class="form-control validation-rules-select"
-                                                aria-label="Default select example" multiple>
+                                                class="form-control validation-rules-select" multiple>
                                                 <option value="required"
                                                     {{ in_array('required', $currentRules) ? 'selected' : '' }}>
                                                     Required</option>
@@ -186,16 +189,91 @@
                                             <button type="button" class="btn btn-danger btn-remove">−</button>
                                         </div>
                                     </div>
+
+                                    <!-- Data Source Section (only for select type) -->
                                     <div
-                                        class="row mt-2 select-options {{ $field->type == 'select' ? '' : 'd-none' }}">
-                                        <div class="col-9">
-                                            @if ($field->type == 'select' && !empty($field->options))
-                                                @foreach ($field->options as $optionIndex => $optionValue)
+                                        class="row mt-2 data-source-section {{ $field->type == 'select' ? '' : 'd-none' }}">
+                                        <div class="col-12">
+                                            <label class="form-label mb-2">Data Source:</label>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input data-source-radio" type="radio"
+                                                    name="fields[{{ $index }}][data_source]" value="manual"
+                                                    id="field{{ $index }}_data_manual"
+                                                    {{ empty($field->data_source) ? 'checked' : '' }}>
+                                                <label class="form-check-label"
+                                                    for="field{{ $index }}_data_manual">
+                                                    Custom
+                                                </label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input data-source-radio" type="radio"
+                                                    name="fields[{{ $index }}][data_source]" value="database"
+                                                    id="field{{ $index }}_data_database"
+                                                    {{ !empty($field->data_source) ? 'checked' : '' }}>
+                                                <label class="form-check-label"
+                                                    for="field{{ $index }}_data_database">
+                                                    Dynamic
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Database Source Selection -->
+                                    <div
+                                        class="row mt-2 database-source-section {{ $field->type == 'select' && !empty($field->data_source) ? '' : 'd-none' }}">
+                                        <div class="col-4">
+                                            <label>Select Database Source</label>
+                                            <select name="fields[{{ $index }}][data_source_select]"
+                                                class="form-control database-source-select">
+                                                <option value="">-- Select Source --</option>
+                                                <option value="tagging"
+                                                    {{ $field->data_source == 'tagging' ? 'selected' : '' }}>Tagging
+                                                </option>
+                                                <option value="brand"
+                                                    {{ $field->data_source == 'brand' ? 'selected' : '' }}>Brand
+                                                </option>
+                                                <option value="usecases"
+                                                    {{ $field->data_source == 'usecases' ? 'selected' : '' }}>Use Cases
+                                                </option>
+                                            </select>
+                                            <small class="text-muted">Data will be fetched from this table when form is
+                                                displayed to users</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Select Options (for select type - manual/custom) -->
+                                    <div
+                                        class="row mt-2 select-options {{ $field->type == 'select' && empty($field->data_source) ? '' : 'd-none' }}">
+                                        <div class="col-12">
+                                            <label class="form-label mb-2">Custom Options:</label>
+                                            @php
+                                                $options = $field->options ? json_decode($field->options, true) : [];
+                                            @endphp
+                                            <div class="options-container">
+                                                @if (!empty($options))
+                                                    @foreach ($options as $optionValue)
+                                                        <div class="option-row d-flex align-items-center mb-2">
+                                                            <input type="text"
+                                                                name="fields[{{ $index }}][options][]"
+                                                                class="form-control me-2" placeholder="Option value"
+                                                                value="{{ $optionValue }}">
+                                                            <button type="button"
+                                                                class="btn btn-success btn-option-add me-1"
+                                                                title="Add option">
+                                                                +
+                                                            </button>
+                                                            <button type="button"
+                                                                class="btn btn-danger btn-option-remove"
+                                                                title="Remove option">
+                                                                −
+                                                            </button>
+                                                        </div>
+                                                    @endforeach
+                                                @else
                                                     <div class="option-row d-flex align-items-center mb-2">
                                                         <input type="text"
-                                                            name="fields[{{ $index }}][options][{{ $optionIndex }}]"
-                                                            class="form-control me-2" placeholder="Option value"
-                                                            value="{{ $optionValue }}">
+                                                            name="fields[{{ $index }}][options][]"
+                                                            class="form-control me-2" placeholder="Option value">
                                                         <button type="button"
                                                             class="btn btn-success btn-option-add me-1"
                                                             title="Add option">
@@ -207,22 +285,20 @@
                                                             −
                                                         </button>
                                                     </div>
-                                                @endforeach
-                                            @else
-                                                <div class="option-row d-flex align-items-center mb-2">
-                                                    <input type="text"
-                                                        name="fields[{{ $index }}][options][0]"
-                                                        class="form-control me-2" placeholder="Option value">
-                                                    <button type="button" class="btn btn-success btn-option-add me-1"
-                                                        title="Add option">
-                                                        +
-                                                    </button>
-                                                    <button type="button" class="btn btn-danger btn-option-remove"
-                                                        title="Remove option">
-                                                        −
-                                                    </button>
-                                                </div>
-                                            @endif
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Checkbox Terms/Description -->
+                                    <div
+                                        class="row mt-2 checkbox-terms-section {{ $field->type == 'checkbox' ? '' : 'd-none' }}">
+                                        <div class="col-12">
+                                            <label class="form-label mb-2">Checkbox Terms/Description:</label>
+                                            <textarea name="fields[{{ $index }}][checkbox_terms]" class="form-control" rows="4"
+                                                placeholder="Enter terms and conditions or description for the checkbox. Example: I agree to all the terms and conditions and privacy policy of this website...">{{ $field->checkbox_terms }}</textarea>
+                                            <small class="text-muted">This text will appear next to the checkbox as its
+                                                label/description.</small>
                                         </div>
                                     </div>
                                 </div>
@@ -242,166 +318,332 @@
     let fieldIndex = {{ $form->fields->count() }};
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize validation rules visibility on page load
-        document.querySelectorAll('.validation-type').forEach(select => {
-            toggleValidationRules(select);
-        });
-
-        // Initialize field type visibility on page load
-        document.querySelectorAll('.field-type').forEach(select => {
-            toggleSelectOptions(select);
+        // Initialize all field sections on page load
+        document.querySelectorAll('.field-group').forEach(group => {
+            initializeFieldGroup(group);
         });
     });
 
     document.addEventListener('change', function(e) {
         if (e.target.classList.contains('field-type')) {
-            toggleSelectOptions(e.target);
+            handleFieldTypeChange(e.target);
         }
 
         if (e.target.classList.contains('validation-type')) {
-            toggleValidationRules(e.target);
+            handleValidationTypeChange(e.target);
+        }
+
+        if (e.target.classList.contains('data-source-radio')) {
+            handleDataSourceRadioChange(e.target);
         }
     });
-
-    function toggleSelectOptions(selectElement) {
-        const group = selectElement.closest('.field-group');
-        const options = group.querySelector('.select-options');
-        if (selectElement.value === 'select') {
-            options.classList.remove('d-none');
-        } else {
-            options.classList.add('d-none');
-        }
-    }
-
-    function toggleValidationRules(selectElement) {
-        const group = selectElement.closest('.field-group');
-        const validationRules = group.querySelector('.validation-rules');
-
-        if (selectElement.value === 'validation') {
-            validationRules.classList.remove('d-none');
-            validationRules.style.display = 'block';
-        } else {
-            validationRules.classList.add('d-none');
-            validationRules.style.display = 'none';
-            // Clear selected rules when switching to nullable
-            const rulesSelect = validationRules.querySelector('.validation-rules-select');
-            if (rulesSelect) {
-                rulesSelect.selectedIndex = -1;
-            }
-        }
-    }
 
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('btn-add')) {
-            const wrapper = document.getElementById('fields-wrapper');
-            const fieldGroups = document.querySelectorAll('.field-group');
-            const lastGroup = fieldGroups[fieldGroups.length - 1];
-            const clone = lastGroup.cloneNode(true);
-
-            // Remove the ID field for new entries
-            clone.querySelector('input[type="hidden"]')?.remove();
-
-            // Update all names with new index
-            clone.querySelectorAll('input, select').forEach(el => {
-                const name = el.getAttribute('name');
-                if (name) {
-                    el.setAttribute('name', name.replace(/\[\d+\]/g, `[${fieldIndex}]`));
-                }
-            });
-
-            // Reset values
-            clone.querySelectorAll('input[type="text"]:not([name*="[id]"])').forEach(el => el.value = '');
-
-            // Reset field type
-            const fieldTypeSelect = clone.querySelector('.field-type');
-            if (fieldTypeSelect) {
-                fieldTypeSelect.selectedIndex = 0;
-            }
-
-            // Reset validation type to nullable
-            const validationTypeSelect = clone.querySelector('.validation-type');
-            if (validationTypeSelect) {
-                validationTypeSelect.selectedIndex = 0;
-            }
-
-            // Reset validation rules
-            const validationRulesSelect = clone.querySelector('.validation-rules-select');
-            if (validationRulesSelect) {
-                validationRulesSelect.selectedIndex = -1;
-            }
-
-            // Hide options and validation rules by default
-            clone.querySelector('.select-options').classList.add('d-none');
-            clone.querySelector('.validation-rules').classList.add('d-none');
-            clone.querySelector('.validation-rules').style.display = 'none';
-
-            // Clear select options except first one
-            const optionRows = clone.querySelectorAll('.option-row');
-            optionRows.forEach((row, index) => {
-                if (index > 0) {
-                    row.remove();
-                } else {
-                    row.querySelector('input').value = '';
-                }
-            });
-
-            wrapper.appendChild(clone);
-            fieldIndex++;
+            addNewField();
         }
 
         if (e.target.classList.contains('btn-remove')) {
-            const groups = document.querySelectorAll('.field-group');
-            if (groups.length > 1) {
-                e.target.closest('.field-group').remove();
-                // Reindex remaining fields
-                reindexFields();
-            }
+            removeField(e.target);
         }
 
         if (e.target.classList.contains('btn-option-add')) {
-            const row = e.target.closest('.option-row');
-            const parentDiv = row.parentNode;
-            const fieldGroup = row.closest('.field-group');
-            const fieldNameInput = fieldGroup.querySelector('input[name*="[label]"]');
-            const fieldName = fieldNameInput ? fieldNameInput.getAttribute('name') : '';
-            const fieldIndexMatch = fieldName.match(/\[(\d+)\]/);
-            const currentIndex = fieldIndexMatch ? fieldIndexMatch[1] : fieldIndex;
-
-            const clone = row.cloneNode(true);
-            clone.querySelector('input').value = '';
-
-            // Update the name attribute for the new option
-            const optionInput = clone.querySelector('input[name*="[options]"]');
-            const currentName = optionInput.getAttribute('name');
-            const newName = currentName.replace(/\[\d+\]\[\d+\]/, `[${currentIndex}][${Date.now()}]`);
-            optionInput.setAttribute('name', newName);
-
-            parentDiv.appendChild(clone);
+            addOption(e.target);
         }
 
         if (e.target.classList.contains('btn-option-remove')) {
-            const rows = e.target.closest('.select-options').querySelectorAll('.option-row');
-            if (rows.length > 1) {
-                e.target.closest('.option-row').remove();
-            }
+            removeOption(e.target);
         }
     });
+
+    // Helper functions
+    function initializeFieldGroup(group) {
+        const fieldType = group.querySelector('.field-type').value;
+        
+        // Show/hide sections based on field type
+        toggleFieldSections(group, fieldType);
+        
+        // Initialize validation rules visibility
+        const validationType = group.querySelector('.validation-type').value;
+        toggleValidationRules(group, validationType);
+        
+        // Initialize data source based on current selection
+        const dataSourceRadio = group.querySelector('.data-source-radio:checked');
+        if (dataSourceRadio) {
+            toggleDataSource(group, dataSourceRadio.value);
+        }
+        
+        // For checkbox type, explicitly hide data source and select options sections
+        if (fieldType === 'checkbox') {
+            group.querySelector('.data-source-section').classList.add('d-none');
+            group.querySelector('.select-options').classList.add('d-none');
+        }
+        
+        // If it's a select field with dynamic source, make sure database section is shown
+        if (fieldType === 'select') {
+            const databaseRadio = group.querySelector('.data-source-radio[value="database"]');
+            if (databaseRadio && databaseRadio.checked) {
+                // Show database section if dynamic is selected
+                const databaseSection = group.querySelector('.database-source-section');
+                databaseSection.classList.remove('d-none');
+                
+                // Hide custom options
+                const selectOptions = group.querySelector('.select-options');
+                selectOptions.classList.add('d-none');
+            }
+        }
+    }
+
+    function handleFieldTypeChange(selectElement) {
+        const group = selectElement.closest('.field-group');
+        const fieldType = selectElement.value;
+        toggleFieldSections(group, fieldType);
+        
+        // If changing to select, default to manual
+        if (fieldType === 'select') {
+            const manualRadio = group.querySelector('.data-source-radio[value="manual"]');
+            if (manualRadio) {
+                manualRadio.checked = true;
+                toggleDataSource(group, 'manual');
+            }
+        }
+    }
+
+    function handleValidationTypeChange(selectElement) {
+        const group = selectElement.closest('.field-group');
+        toggleValidationRules(group, selectElement.value);
+    }
+
+    function handleDataSourceRadioChange(radioElement) {
+        const group = radioElement.closest('.field-group');
+        toggleDataSource(group, radioElement.value);
+    }
+
+    function toggleFieldSections(group, fieldType) {
+        // Hide all optional sections first
+        group.querySelector('.data-source-section').classList.add('d-none');
+        group.querySelector('.database-source-section').classList.add('d-none');
+        group.querySelector('.select-options').classList.add('d-none');
+        group.querySelector('.checkbox-terms-section').classList.add('d-none');
+
+        if (fieldType === 'select') {
+            // Show data source section for select type
+            group.querySelector('.data-source-section').classList.remove('d-none');
+            
+            // Check existing selection
+            const databaseRadio = group.querySelector('.data-source-radio[value="database"]');
+            const manualRadio = group.querySelector('.data-source-radio[value="manual"]');
+            
+            if (databaseRadio && databaseRadio.checked) {
+                // Show database section if dynamic is selected
+                group.querySelector('.database-source-section').classList.remove('d-none');
+                group.querySelector('.select-options').classList.add('d-none');
+            } else if (manualRadio && manualRadio.checked) {
+                // Show custom options if manual is selected
+                group.querySelector('.database-source-section').classList.add('d-none');
+                group.querySelector('.select-options').classList.remove('d-none');
+            }
+            
+        } else if (fieldType === 'checkbox') {
+            // For checkbox, only show the terms/description section
+            group.querySelector('.checkbox-terms-section').classList.remove('d-none');
+            // Make sure select options is hidden for checkbox
+            group.querySelector('.select-options').classList.add('d-none');
+            // Also hide data source section for checkbox
+            group.querySelector('.data-source-section').classList.add('d-none');
+        }
+    }
+
+    function toggleValidationRules(group, validationType) {
+        const validationRules = group.querySelector('.validation-rules');
+        
+        if (validationType === 'validation') {
+            validationRules.classList.remove('d-none');
+        } else {
+            validationRules.classList.add('d-none');
+            const rulesSelect = validationRules.querySelector('.validation-rules-select');
+            if (rulesSelect) {
+                // Clear selected options
+                Array.from(rulesSelect.options).forEach(option => {
+                    option.selected = false;
+                });
+            }
+        }
+    }
+
+    function toggleDataSource(group, dataSourceValue) {
+        const databaseSection = group.querySelector('.database-source-section');
+        const selectOptions = group.querySelector('.select-options');
+        
+        if (dataSourceValue === 'database') {
+            databaseSection.classList.remove('d-none');
+            selectOptions.classList.add('d-none');
+        } else {
+            databaseSection.classList.add('d-none');
+            selectOptions.classList.remove('d-none');
+        }
+    }
+
+    function addNewField() {
+        const wrapper = document.getElementById('fields-wrapper');
+        const firstGroup = document.querySelector('.field-group');
+        const clone = firstGroup.cloneNode(true);
+
+        // Remove the ID field for new entries
+        const hiddenIdInput = clone.querySelector('input[type="hidden"][name*="[id]"]');
+        if (hiddenIdInput) {
+            hiddenIdInput.remove();
+        }
+
+        // Update all names with new index
+        clone.querySelectorAll('input, select, textarea').forEach(el => {
+            const name = el.getAttribute('name');
+            if (name) {
+                el.setAttribute('name', name.replace(/\[\d+\]/g, `[${fieldIndex}]`));
+            }
+        });
+
+        // Update IDs for radio buttons
+        clone.querySelectorAll('[id*="field"]').forEach(el => {
+            const id = el.getAttribute('id');
+            if (id) {
+                el.setAttribute('id', id.replace(/field\d+/g, `field${fieldIndex}`));
+            }
+        });
+
+        // Update radio button labels
+        clone.querySelectorAll('label[for*="field"]').forEach(label => {
+            const forAttr = label.getAttribute('for');
+            if (forAttr) {
+                label.setAttribute('for', forAttr.replace(/field\d+/g, `field${fieldIndex}`));
+            }
+        });
+
+        // Reset values
+        clone.querySelectorAll('input[type="text"]:not([name*="[id]"])').forEach(el => el.value = '');
+        clone.querySelectorAll('textarea').forEach(el => el.value = '');
+
+        // Reset field type
+        const fieldTypeSelect = clone.querySelector('.field-type');
+        if (fieldTypeSelect) {
+            fieldTypeSelect.selectedIndex = 0;
+        }
+
+        // Reset validation type to nullable
+        const validationTypeSelect = clone.querySelector('.validation-type');
+        if (validationTypeSelect) {
+            validationTypeSelect.selectedIndex = 0;
+        }
+
+        // Reset validation rules
+        const validationRulesSelect = clone.querySelector('.validation-rules-select');
+        if (validationRulesSelect) {
+            Array.from(validationRulesSelect.options).forEach(option => {
+                option.selected = false;
+            });
+        }
+
+        // Reset radio buttons to manual
+        clone.querySelectorAll('.data-source-radio').forEach(radio => {
+            radio.checked = radio.value === 'manual';
+        });
+
+        // Reset database source select
+        const databaseSelect = clone.querySelector('.database-source-select');
+        if (databaseSelect) {
+            databaseSelect.selectedIndex = 0;
+        }
+
+        // Clear select options except first one
+        const selectOptionsDiv = clone.querySelector('.select-options');
+        if (selectOptionsDiv) {
+            const optionsContainer = selectOptionsDiv.querySelector('.options-container');
+            const optionRows = optionsContainer.querySelectorAll('.option-row');
+            if (optionRows.length > 1) {
+                for (let i = 1; i < optionRows.length; i++) {
+                    optionRows[i].remove();
+                }
+            }
+            if (optionRows.length > 0) {
+                optionRows[0].querySelector('input').value = '';
+            }
+        }
+
+        // Initialize the new field with default values
+        toggleFieldSections(clone, 'text');
+        toggleValidationRules(clone, 'nullable');
+        
+        // Make sure data source section is hidden for non-select fields
+        const currentFieldType = clone.querySelector('.field-type').value;
+        if (currentFieldType !== 'select') {
+            clone.querySelector('.data-source-section').classList.add('d-none');
+        }
+
+        wrapper.appendChild(clone);
+        fieldIndex++;
+    }
+
+    function removeField(button) {
+        const groups = document.querySelectorAll('.field-group');
+        if (groups.length > 1) {
+            button.closest('.field-group').remove();
+            // Reindex remaining fields
+            reindexFields();
+            // Update fieldIndex to match new count
+            fieldIndex = document.querySelectorAll('.field-group').length;
+        }
+    }
+
+    function addOption(button) {
+        const row = button.closest('.option-row');
+        const optionsContainer = row.closest('.options-container');
+        const clone = row.cloneNode(true);
+        clone.querySelector('input').value = '';
+        
+        optionsContainer.appendChild(clone);
+    }
+
+    function removeOption(button) {
+        const optionsContainer = button.closest('.options-container');
+        const rows = optionsContainer.querySelectorAll('.option-row');
+        if (rows.length > 1) {
+            button.closest('.option-row').remove();
+        }
+    }
 
     function reindexFields() {
         const groups = document.querySelectorAll('.field-group');
         groups.forEach((group, index) => {
             // Update field ID if exists
-            const hiddenIdInput = group.querySelector('input[type="hidden"]');
+            const hiddenIdInput = group.querySelector('input[type="hidden"][name*="[id]"]');
             if (hiddenIdInput) {
                 hiddenIdInput.setAttribute('name', `fields[${index}][id]`);
             }
 
             // Update all other inputs
-            group.querySelectorAll('input:not([type="hidden"]), select').forEach(el => {
+            group.querySelectorAll('input, select, textarea').forEach(el => {
                 const name = el.getAttribute('name');
                 if (name) {
                     const newName = name.replace(/\[\d+\]/g, `[${index}]`);
                     el.setAttribute('name', newName);
+                }
+            });
+
+            // Update IDs for radio buttons
+            group.querySelectorAll('[id*="field"]').forEach(el => {
+                const id = el.getAttribute('id');
+                if (id) {
+                    const newId = id.replace(/field\d+/g, `field${index}`);
+                    el.setAttribute('id', newId);
+                }
+            });
+
+            // Update radio button labels
+            group.querySelectorAll('label[for*="field"]').forEach(label => {
+                const forAttr = label.getAttribute('for');
+                if (forAttr) {
+                    const newFor = forAttr.replace(/field\d+/g, `field${index}`);
+                    label.setAttribute('for', newFor);
                 }
             });
         });
