@@ -76,7 +76,12 @@
                             <span>Use Cases</span>
                         </a>
                     </li>
-
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('admin.export.index') }}" class="sidebar-link">
+                            <i class="iconoir-download menu-icon"></i>
+                            <span>Export</span>
+                        </a>
+                    </li>
                     @if (auth()->user()->canAccess('announcement', 'view'))
                         <li class="nav-item">
                             <a class="nav-link" href="#sidebarAnnouncements" data-bs-toggle="collapse" role="button"

@@ -44,33 +44,43 @@
                                 <tbody>
                                     @foreach ($submissions as $submission)
                                         @php
-                                            $values = [];
-                                            foreach ($submission->values as $v) {
-                                                $val = $v->value;
-                                                if ($v->field->type === 'checkbox' && $val == 1) {
-                                                    $val = 'Accept';
-                                                }
-                                                if ($val === null || $val === '') {
-                                                    $val = '-';
-                                                }
-                                                $values[$v->form_field_id] = $val;
+                                            // Create a map of field_id => display_value for this submission
+                                            $displayValues = [];
+                                            foreach ($submission->values as $value) {
+                                                $displayValues[$value->form_field_id] = $value->display_value;
+                                            }
+                                            
+                                            // Prepare values data for modal
+                                            $modalValues = [];
+                                            foreach ($submission->values as $value) {
+                                                $modalValues[] = [
+                                                    'id' => $value->id,
+                                                    'form_field_id' => $value->form_field_id,
+                                                    'value' => $value->value,
+                                                    'display_value' => $value->display_value,
+                                                    'field' => $value->field ? [
+                                                        'id' => $value->field->id,
+                                                        'label' => $value->field->label,
+                                                        'type' => $value->field->type,
+                                                        'data_source' => $value->field->data_source
+                                                    ] : null
+                                                ];
                                             }
                                         @endphp
                                         <tr>
                                             <td>{{ $loop->iteration }}</td>
                                             <td>
                                                 <small>{{ $submission->created_at->format('d M Y') }}</small><br>
-                                                <small
-                                                    class="text-muted">{{ $submission->created_at->format('h:i A') }}</small>
+                                                <small class="text-muted">{{ $submission->created_at->format('h:i A') }}</small>
                                             </td>
                                             @foreach ($firstFourFields as $field)
-                                                <td>{{ $values[$field->id] ?? '-' }}</td>
+                                                <td>{{ $displayValues[$field->id] ?? '-' }}</td>
                                             @endforeach
                                             <td>
                                                 <button class="btn btn-sm btn-info view-submission"
                                                     data-bs-toggle="modal" data-bs-target="#submissionModal"
                                                     data-date="{{ $submission->created_at->format('d M Y, h:i A') }}"
-                                                    data-values='@json($submission->values)'
+                                                    data-values='@json($modalValues)'
                                                     data-review='@json($submission->review)'>
                                                     <i class="fa-solid fa-eye"></i>
                                                 </button>
@@ -139,6 +149,30 @@ document.addEventListener('DOMContentLoaded', () => {
         file: 'iconoir-attachment',
         default: 'iconoir-info-circle'
     };
+    
+    // Function to get display value for dynamic sources
+    async function getDynamicDisplayValue(dataSource, value) {
+        if (!dataSource || !value) return value;
+        
+        try {
+            const response = await fetch(`/admin/get-dynamic-value?source=${dataSource}&id=${value}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                return data.name || value;
+            }
+            return value;
+        } catch (error) {
+            console.error('Error fetching dynamic value:', error);
+            return value;
+        }
+    }
+    
     document.querySelectorAll('.view-submission').forEach(btn => {
         btn.addEventListener('click', function() {
             document.getElementById('modal-date').textContent = this.dataset.date;
@@ -146,33 +180,62 @@ document.addEventListener('DOMContentLoaded', () => {
             const review = this.dataset.review ? JSON.parse(this.dataset.review) : null;
             const fieldsContainer = document.getElementById('modal-fields-container');
             fieldsContainer.innerHTML = '';
-            values.forEach(item => {
+            
+            // Process values immediately
+            values.forEach((item, index) => {
                 const icon = fieldIcons[item.field?.type] || fieldIcons.default;
-                let displayValue = item.value;
-                if (item.field?.type === 'checkbox' && item.value == 1) {
-                    displayValue = 'Accept';
-                } else if (!displayValue || displayValue === '') {
+                let displayValue = item.display_value || item.value;
+                
+                // Format checkbox values
+                if (item.field?.type === 'checkbox') {
+                    displayValue = item.value == 1 ? 'Accepted' : 'Not Accepted';
+                }
+                
+                // Handle empty values
+                if (!displayValue || displayValue === '') {
                     displayValue = '<span class="text-muted">Empty</span>';
                 }
+                
                 fieldsContainer.innerHTML += `
-                    <div class="d-flex justify-content-between mb-2">
+                    <div class="d-flex justify-content-between mb-2" id="field-${index}">
                         <p class="fw-semibold">
-                            <i class="${icon} me-1"></i> ${item.field?.label} :
+                            <i class="${icon} me-1"></i> ${item.field?.label || 'Unknown Field'} :
                         </p>
                         <p class="fw-semibold text-end" style="max-width:60%; word-break: break-word;">
                             ${displayValue}
                         </p>
                     </div>
                 `;
+                
+                // If it's a dynamic select field, fetch the display name async
+                if (item.field?.data_source && item.field?.type === 'select' && item.value) {
+                    getDynamicDisplayValue(item.field.data_source, item.value)
+                        .then(dynamicValue => {
+                            const fieldElement = document.getElementById(`field-${index}`);
+                            if (fieldElement) {
+                                const valueElement = fieldElement.querySelector('.fw-semibold.text-end');
+                                if (valueElement) {
+                                    valueElement.innerHTML = dynamicValue;
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error updating dynamic value:', error);
+                        });
+                }
             });
+            
+            // Handle review
             const reviewBox = document.getElementById('modal-review-container');
             const starsBox = document.getElementById('modal-review-stars');
             const commentBox = document.getElementById('modal-review-comment');
             const textarea = commentBox.querySelector('textarea');
+            
             reviewBox.classList.add('d-none');
             starsBox.innerHTML = '';
             commentBox.classList.add('d-none');
             textarea.value = '';
+            
             if (review && (review.rating || review.comment)) {
                 reviewBox.classList.remove('d-none');
                 if (review.rating) {

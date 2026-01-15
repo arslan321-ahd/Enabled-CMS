@@ -33,9 +33,9 @@
                         @method('PUT')
                         <div class="row">
                             <div class="col-4 mb-3">
-                                <label>Select User</label>
+                                <label>Select Branch</label>
                                 <select name="user_id" class="form-control" required>
-                                    <option value="">-- Select User --</option>
+                                    <option value="">Select Branch</option>
                                     @foreach ($users as $user)
                                         <option value="{{ $user->id }}"
                                             {{ $form->user_id == $user->id ? 'selected' : '' }}>
@@ -65,7 +65,7 @@
                         </div>
                         <div id="fields-wrapper">
                             @foreach ($form->fields as $index => $field)
-                                <div class="field-group mb-3 border p-3 rounded">
+                               <div class="field-group mb-1 p-2">
                                     <input type="hidden" name="fields[{{ $index }}][id]"
                                         value="{{ $field->id }}">
                                     <div class="row align-items-end">
@@ -189,12 +189,9 @@
                                             <button type="button" class="btn btn-danger btn-remove">−</button>
                                         </div>
                                     </div>
-
-                                    <!-- Data Source Section (only for select type) -->
                                     <div
                                         class="row mt-2 data-source-section {{ $field->type == 'select' ? '' : 'd-none' }}">
                                         <div class="col-12">
-                                            <label class="form-label mb-2">Data Source:</label>
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input data-source-radio" type="radio"
                                                     name="fields[{{ $index }}][data_source]" value="manual"
@@ -222,10 +219,10 @@
                                     <div
                                         class="row mt-2 database-source-section {{ $field->type == 'select' && !empty($field->data_source) ? '' : 'd-none' }}">
                                         <div class="col-4">
-                                            <label>Select Database Source</label>
+                                            <label>Select Dynamic</label>
                                             <select name="fields[{{ $index }}][data_source_select]"
                                                 class="form-control database-source-select">
-                                                <option value="">-- Select Source --</option>
+                                                <option value="">Select Source</option>
                                                 <option value="tagging"
                                                     {{ $field->data_source == 'tagging' ? 'selected' : '' }}>Tagging
                                                 </option>
@@ -236,8 +233,6 @@
                                                     {{ $field->data_source == 'usecases' ? 'selected' : '' }}>Use Cases
                                                 </option>
                                             </select>
-                                            <small class="text-muted">Data will be fetched from this table when form is
-                                                displayed to users</small>
                                         </div>
                                     </div>
 
@@ -373,8 +368,8 @@
             toggleDataSource(group, dataSourceRadio.value);
         }
         
-        // For checkbox type, explicitly hide data source and select options sections
-        if (fieldType === 'checkbox') {
+        // For non-select types, explicitly hide data source and select options sections
+        if (fieldType !== 'select') {
             group.querySelector('.data-source-section').classList.add('d-none');
             group.querySelector('.select-options').classList.add('d-none');
         }
@@ -427,7 +422,7 @@
         group.querySelector('.checkbox-terms-section').classList.add('d-none');
 
         if (fieldType === 'select') {
-            // Show data source section for select type
+            // Show data source section only for select type
             group.querySelector('.data-source-section').classList.remove('d-none');
             
             // Check existing selection
@@ -447,11 +442,8 @@
         } else if (fieldType === 'checkbox') {
             // For checkbox, only show the terms/description section
             group.querySelector('.checkbox-terms-section').classList.remove('d-none');
-            // Make sure select options is hidden for checkbox
-            group.querySelector('.select-options').classList.add('d-none');
-            // Also hide data source section for checkbox
-            group.querySelector('.data-source-section').classList.add('d-none');
         }
+        // For all other field types (text, email, number, textarea) - nothing to show
     }
 
     function toggleValidationRules(group, validationType) {
@@ -573,10 +565,11 @@
         toggleFieldSections(clone, 'text');
         toggleValidationRules(clone, 'nullable');
         
-        // Make sure data source section is hidden for non-select fields
+        // Make sure data source and select options sections are hidden for non-select fields
         const currentFieldType = clone.querySelector('.field-type').value;
         if (currentFieldType !== 'select') {
             clone.querySelector('.data-source-section').classList.add('d-none');
+            clone.querySelector('.select-options').classList.add('d-none');
         }
 
         wrapper.appendChild(clone);

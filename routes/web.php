@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DynamicFormController;
+use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\FormBuilderController;
 use App\Http\Controllers\Admin\TaggingController;
 use App\Http\Controllers\Admin\UseCaseController;
@@ -65,8 +66,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/forms/{id}/edit', [FormBuilderController::class, 'edit'])->name('forms.edit');
     Route::put('/admin/forms/{id}/update', [FormBuilderController::class, 'update'])->name('forms.update');
     Route::delete('/admin/forms/{id}/delete', [FormBuilderController::class, 'destroy'])->name('forms.destroy');
+    // Export Routes
+    Route::get('/admin/export', [ExportController::class, 'index'])->name('admin.export.index');
+    Route::post('/admin/export/download', [ExportController::class, 'export'])->name('admin.export.download');
+    Route::get('/admin/export/use-cases/{useCase}/brand', [ExportController::class, 'getBrandByUseCase'])->name('admin.export.usecase.brand');
     // Dynamic Form Routes
     Route::get('/admin/forms/{form}/submissions', [DynamicFormController::class, 'showSubmissions'])->name('forms.submissions');
+    Route::get('/admin/submissions/{submission}/details', [DynamicFormController::class, 'getSubmissionDetails'])->name('admin.submissions.details');
+    Route::get('/admin/get-dynamic-value', [DynamicFormController::class, 'getDynamicValue'])->name('admin.get-dynamic-value');
     // Brands Routes
     Route::prefix('/admin')->name('admin.')->group(function () {
         Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');

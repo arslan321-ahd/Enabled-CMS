@@ -8,6 +8,7 @@ use App\Models\Form;
 use App\Models\FormReview;
 use App\Models\FormSubmission;
 use App\Models\SubmissionValue;
+use App\Models\Tagging;
 use App\Models\UseCase;
 use Illuminate\Http\Request;
 
@@ -27,8 +28,8 @@ class DynamicFormController extends Controller
         $submissions = FormSubmission::where('form_id', $form->id)
             ->with([
                 'user',
-                'values.field',
-                'review' // ✅ REQUIRED
+            'values.field', // This will load the field relationship
+            'review'
             ])
             ->latest()
             ->paginate(20);
@@ -82,11 +83,11 @@ class DynamicFormController extends Controller
             $rules[$field->name] = implode('|', array_unique($fieldRules));
         }
         $validated = $request->validate($rules);
-        // if (auth()->check()) {
-        //     FormSubmission::where('form_id', $form->id)
-        //         ->where('user_id', auth()->id())
-        //         ->delete();
-        // }
+        if (auth()->check()) {
+            FormSubmission::where('form_id', $form->id)
+                ->where('user_id', auth()->id())
+                ->delete();
+        }
         $submission = FormSubmission::create([
             'form_id' => $form->id,
             'user_id' => auth()->check() ? auth()->id() : null,
@@ -134,6 +135,70 @@ class DynamicFormController extends Controller
         return response()->json([
             'status'  => true,
             'message' => 'Review submitted successfully',
+        ]);
+    }
+
+    // app/Http/Controllers/Admin/FormController.php
+    public function getSubmissionDetails(FormSubmission $submission)
+    {
+        // Eager load with dynamic value resolution
+        $submission->load([
+            'values' => function ($query) {
+                $query->with(['field' => function ($q) {
+                    $q->select('id', 'label', 'type', 'data_source');
+                }]);
+            },
+            'review'
+        ]);
+
+        // Transform values to include display_value
+        $values = $submission->values->map(function ($value) {
+            return [
+                'id' => $value->id,
+                'form_field_id' => $value->form_field_id,
+                'value' => $value->value,
+                'display_value' => $value->display_value,
+                'field' => $value->field ? [
+                    'id' => $value->field->id,
+                    'label' => $value->field->label,
+                    'type' => $value->field->type,
+                    'data_source' => $value->field->data_source
+                ] : null
+            ];
+        });
+
+        return response()->json([
+            'values' => $values,
+            'review' => $submission->review
+        ]);
+    }
+
+    public function getDynamicValue(Request $request)
+    {
+        $source = $request->get('source');
+        $id = $request->get('id');
+
+        if (!$source || !$id) {
+            return response()->json(['name' => null]);
+        }
+
+        switch ($source) {
+            case 'brand':
+                $item = Brand::select('id', 'name')->find($id);
+                break;
+            case 'tagging':
+                $item = Tagging::select('id', 'source as name')->find($id);
+                break;
+            case 'usecases':
+                $item = UseCase::select('id', 'name')->find($id);
+                break;
+            default:
+                $item = null;
+        }
+
+        return response()->json([
+            'name' => $item ? $item->name : 'Not Found',
+            'id' => $id
         ]);
     }
 }

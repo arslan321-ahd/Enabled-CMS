@@ -31,9 +31,9 @@
                         @csrf
                         <div class="row">
                             <div class="col-4 mb-3">
-                                <label>Select User</label>
+                                <label>Select Branch</label>
                                 <select name="user_id" class="form-control" required>
-                                    <option value="">-- Select User --</option>
+                                    <option value="">Select Branch</option>
                                     @foreach ($users as $user)
                                         <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})
                                         </option>
@@ -51,7 +51,7 @@
                             </div>
                         </div>
                         <div id="fields-wrapper">
-                            <div class="field-group mb-3 border p-3 rounded">
+                            <div class="field-group mb-1 p-2">
                                 <div class="row align-items-end">
                                     <div class="col-3">
                                         <label>Field Label</label>
@@ -102,7 +102,6 @@
                                 </div>
                                 <div class="row mt-2 data-source-section d-none">
                                     <div class="col-12">
-                                        <label class="form-label mb-2">Data Source:</label>
                                         <div class="form-check form-check-inline">
                                             <input class="form-check-input data-source-radio" type="radio"
                                                 name="fields[0][data_source]" id="field0_data_manual" value="manual"
@@ -123,16 +122,14 @@
                                 </div>
                                 <div class="row mt-2 database-source-section d-none">
                                     <div class="col-4">
-                                        <label>Select Database Source</label>
+                                        <label>Select Dynamic</label>
                                         <select name="fields[0][data_source_select]"
                                             class="form-control database-source-select">
-                                            <option value="">-- Select Source --</option>
+                                            <option value="">Select Source</option>
                                             <option value="tagging">Tagging</option>
                                             <option value="brand">Brand</option>
                                             <option value="usecases">Use Cases</option>
                                         </select>
-                                        <small class="text-muted">Data will be fetched from this table when form is
-                                            displayed to users</small>
                                     </div>
                                 </div>
                                 <div class="row mt-2 select-options d-none">

@@ -327,4 +327,9 @@ class FormBuilderController extends Controller
                 ->with('error', 'Error deleting form: ' . $e->getMessage());
         }
     }
+    public function getFormFields(Form $form)
+    {
+        $fields = $form->fields()->orderBy('order')->get(['id', 'label', 'type']);
+        return response()->json($fields);
+    }
 }
