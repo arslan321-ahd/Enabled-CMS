@@ -1,5 +1,5 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <div class="container mt-2">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -97,7 +97,7 @@
                                     @elseif ($field->type === 'select' && $field->options)
                                         <select name="{{ $field->name }}" class="form-control"
                                             @if ($field->required) required @endif>
-                                            <option value="">-- Select {{ $field->label }} --</option>
+                                            <option value="">Select {{ $field->label }}</option>
                                             @foreach (json_decode($field->options, true) ?? [] as $option)
                                                 <option value="{{ $option }}">{{ $option }}</option>
                                             @endforeach
@@ -224,46 +224,33 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-
-        // Shared variables
         let currentSubmissionId = null;
         let selectedRating = 0;
-
-        // DOM elements
         const form = document.getElementById('dynamicForm');
         const mainFormSection = document.querySelector('.card.shadow-sm');
         const successSection = document.getElementById('successSection');
         const reviewUrl = "{{ url('/user/review') }}";
-
-        /* -----------------------------
-           MAIN FORM SUBMIT
-        ----------------------------- */
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             submitMainForm();
         });
-
         function submitMainForm() {
             clearErrors();
             let isValid = true;
-
             form.querySelectorAll('[required]').forEach(field => {
                 if (field.type === 'checkbox' && !field.checked) markInvalid(field) && (isValid =
                 false);
                 else if (field.type !== 'checkbox' && !field.value) markInvalid(field) && (isValid =
                     false);
             });
-
             if (!isValid) {
                 toastError('Please fill all required fields');
                 return;
             }
-
             const formData = new FormData(form);
             const submitBtn = form.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
             submitBtn.innerHTML = 'Submitting...';
-
             fetch("{{ route('form.submit', $form->slug) }}", {
                     method: "POST",
                     headers: {
@@ -280,7 +267,6 @@
                 .then(data => {
                     if (!data.submission_id) throw new Error('Submission ID missing');
                     currentSubmissionId = data.submission_id;
-
                     mainFormSection.classList.add('d-none');
                     successSection.classList.remove('d-none');
                     successSection.scrollIntoView({
@@ -295,10 +281,6 @@
                     submitBtn.innerHTML = 'Submit';
                 });
         }
-
-        /* -----------------------------
-           EMOJI RATING
-        ----------------------------- */
         document.querySelectorAll('.emoji-rating').forEach(emoji => {
             emoji.addEventListener('click', function() {
                 document.querySelectorAll('.emoji-rating').forEach(e => {
@@ -311,24 +293,17 @@
                 document.querySelector('.comment-section')?.classList.remove('d-none');
             });
         });
-
-        /* -----------------------------
-           SUBMIT / SKIP REVIEW
-        ----------------------------- */
         document.getElementById('submitReview')?.addEventListener('click', submitReview);
         document.getElementById('skipReview')?.addEventListener('click', showThankYouMessage);
-
         function submitReview() {
             if (!currentSubmissionId) {
                 toastError('Submission not found. Please submit the form first.');
                 return;
             }
-
             if (selectedRating === 0) {
                 showThankYouMessage();
                 return;
             }
-
             fetch(reviewUrl, {
                     method: "POST",
                     headers: {
@@ -355,21 +330,15 @@
             document.querySelector('.comment-section')?.classList.add('d-none');
             document.querySelector('.already-submitted')?.classList.remove('d-none');
         }
-
-        /* -----------------------------
-           HELPER FUNCTIONS
-        ----------------------------- */
         function clearErrors() {
             document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
             document.querySelectorAll('.invalid-feedback').forEach(el => el.style.display = 'none');
         }
-
         function markInvalid(field) {
             field.classList.add('is-invalid');
             const error = document.getElementById(`error-${field.name}`);
             if (error) error.style.display = 'block';
         }
-
         function handleErrors(err) {
             if (err.errors) {
                 Object.keys(err.errors).forEach(key => {
@@ -402,7 +371,6 @@
         font-size: 0.875em;
         margin-top: 0.25rem;
     }
-
     .is-invalid {
         border-color: #dc3545 !important;
     }
@@ -410,35 +378,28 @@
     .form-check-input.is-invalid {
         border-color: #dc3545;
     }
-
     .emoji-rating {
         transition: all 0.3s ease;
         opacity: 0.5;
     }
-
     .emoji-rating:hover {
         opacity: 0.8;
         transform: scale(1.1);
     }
-
     .success-icon {
         color: #28a745;
     }
-
     .review-section {
         background: #f8f9fa;
         border-radius: 10px;
         padding: 20px;
     }
-
     .comment-section textarea {
         resize: none;
     }
-
     .already-submitted {
         animation: fadeIn 0.5s ease;
     }
-
     @keyframes fadeIn {
         from {
             opacity: 0;

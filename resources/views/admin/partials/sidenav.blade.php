@@ -16,21 +16,16 @@
     <div class="startbar-menu">
         <div class="startbar-collapse" id="startbarCollapse" data-simplebar>
             <div class="d-flex align-items-start flex-column w-100">
-
                 <ul class="navbar-nav mb-auto w-100">
                     <li class="menu-label mt-2">
                         <span>Navigation</span>
                     </li>
-
-                    {{-- Dashboard (usually visible to all authenticated users) --}}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('dashboard') }}">
                             <i class="iconoir-report-columns menu-icon"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
-
-                    {{-- Customers --}}
                     @if (auth()->user()->canAccess('tagging', 'view'))
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('admin.forms.index') }}">
@@ -39,8 +34,6 @@
                             </a>
                         </li>
                     @endif
-
-                    {{-- Calendar (no permission applied yet) --}}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('admin.calender') }}">
                             <i class="iconoir-calendar menu-icon"></i>
@@ -69,7 +62,6 @@
                             <span>Brands</span>
                         </a>
                     </li>
-
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('admin.use-cases.index') }}">
                             <i class="iconoir-light-bulb menu-icon"></i>
@@ -89,7 +81,6 @@
                                 <i class="iconoir-bell menu-icon"></i>
                                 <span>Announcements</span>
                             </a>
-
                             <div class="collapse" id="sidebarAnnouncements">
                                 <ul class="nav flex-column">
 
@@ -98,7 +89,6 @@
                                             Announcements List
                                         </a>
                                     </li>
-
                                     @if (auth()->user()->canAccess('announcement', 'create'))
                                         <li class="nav-item">
                                             <a href="{{ route('admin.announcements.create') }}" class="nav-link">
@@ -106,7 +96,6 @@
                                             </a>
                                         </li>
                                     @endif
-
                                 </ul>
                             </div>
                         </li>

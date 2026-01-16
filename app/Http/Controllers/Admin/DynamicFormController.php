@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\FormSubmissionMail;
 use App\Models\Brand;
 use App\Models\Form;
 use App\Models\FormReview;
@@ -11,6 +12,7 @@ use App\Models\SubmissionValue;
 use App\Models\Tagging;
 use App\Models\UseCase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class DynamicFormController extends Controller
 {
@@ -36,8 +38,6 @@ class DynamicFormController extends Controller
 
         return view('admin.customers.submissions', compact('form', 'submissions'));
     }
-
-
     public function showPublic($slug)
     {
         $form = Form::where('slug', $slug)
@@ -48,7 +48,6 @@ class DynamicFormController extends Controller
         $useCases = UseCase::where('status', 'active')->get();
         return view('forms.dynamic', compact('form', 'brands', 'useCases'));
     }
-
     public function submit(Request $request, $slug)
     {
         $form = Form::where('slug', $slug)
@@ -59,25 +58,14 @@ class DynamicFormController extends Controller
         foreach ($form->fields as $field) {
             $fieldRules = [];
             $fieldRules[] = $field->required ? 'required' : 'nullable';
-            if (in_array($field->type, ['text', 'textarea'])) {
-                $fieldRules[] = 'string';
-            }
-            if ($field->type === 'email') {
-                $fieldRules[] = 'email';
-            }
-            if ($field->type === 'number') {
-                $fieldRules[] = 'numeric';
-            }
+            if (in_array($field->type, ['text', 'textarea'])) $fieldRules[] = 'string';
+            if ($field->type === 'email') $fieldRules[] = 'email';
+            if ($field->type === 'number') $fieldRules[] = 'numeric';
             if ($field->validation) {
                 foreach (explode('|', $field->validation) as $rule) {
                     $rule = trim($rule);
-                    if ($rule === '255') {
-                        $fieldRules[] = 'max:255';
-                        continue;
-                    }
-                    if (preg_match('/^(max|min):(\d+)$/', $rule, $m)) {
-                        $fieldRules[] = "{$m[1]}:{$m[2]}";
-                    }
+                    if ($rule === '255') $fieldRules[] = 'max:255';
+                    elseif (preg_match('/^(max|min):(\d+)$/', $rule, $m)) $fieldRules[] = "{$m[1]}:{$m[2]}";
                 }
             }
             $rules[$field->name] = implode('|', array_unique($fieldRules));
@@ -92,12 +80,34 @@ class DynamicFormController extends Controller
             'form_id' => $form->id,
             'user_id' => auth()->check() ? auth()->id() : null,
         ]);
+        $submissionValues = [];
         foreach ($form->fields as $field) {
-            SubmissionValue::create([
+            $value = $validated[$field->name] ?? null;
+            if ($field->type === 'checkbox') {
+                $value = isset($validated[$field->name]) && $validated[$field->name] ? 1 : 0;
+            }
+            if ($field->type === 'select' && $field->data_source && $value !== null) {
+                $value = (string) $value;
+            }
+            $subValue = SubmissionValue::create([
                 'submission_id' => $submission->id,
                 'form_field_id' => $field->id,
-                'value'         => $validated[$field->name] ?? null,
+                'value'         => $value,
             ]);
+            $submissionValues[$field->label] = $subValue->display_value;
+        }
+        $userEmail = null;
+        foreach ($form->fields as $field) {
+            if ($field->type === 'email' && !empty($validated[$field->name])) {
+                $userEmail = $validated[$field->name];
+                break;
+            }
+        }
+        Mail::to(config('mail.admin_email'))
+            ->send(new FormSubmissionMail($form, $submissionValues, 'admin'));
+        if ($userEmail) {
+            Mail::to($userEmail)
+                ->send(new FormSubmissionMail($form, $submissionValues, 'user'));
         }
         return response()->json([
             'status'        => true,
@@ -112,36 +122,28 @@ class DynamicFormController extends Controller
             'rating'        => ['nullable', 'integer', 'min:1', 'max:5'],
             'comment'       => ['nullable', 'string', 'max:1000'],
         ]);
-
-        // Prevent duplicate reviews for the same submission
         $alreadyReviewed = FormReview::where(
             'form_submission_id',
             $validated['submission_id']
         )->exists();
-
         if ($alreadyReviewed) {
             return response()->json([
                 'status'  => false,
                 'message' => 'Review already submitted for this form.',
             ], 409);
         }
-
         FormReview::create([
             'form_submission_id' => $validated['submission_id'],
             'rating'             => $validated['rating'],
             'comment'            => $validated['comment'],
         ]);
-
         return response()->json([
             'status'  => true,
             'message' => 'Review submitted successfully',
         ]);
     }
-
-    // app/Http/Controllers/Admin/FormController.php
     public function getSubmissionDetails(FormSubmission $submission)
     {
-        // Eager load with dynamic value resolution
         $submission->load([
             'values' => function ($query) {
                 $query->with(['field' => function ($q) {
@@ -150,8 +152,6 @@ class DynamicFormController extends Controller
             },
             'review'
         ]);
-
-        // Transform values to include display_value
         $values = $submission->values->map(function ($value) {
             return [
                 'id' => $value->id,
@@ -166,22 +166,18 @@ class DynamicFormController extends Controller
                 ] : null
             ];
         });
-
         return response()->json([
             'values' => $values,
             'review' => $submission->review
         ]);
     }
-
     public function getDynamicValue(Request $request)
     {
         $source = $request->get('source');
         $id = $request->get('id');
-
         if (!$source || !$id) {
             return response()->json(['name' => null]);
         }
-
         switch ($source) {
             case 'brand':
                 $item = Brand::select('id', 'name')->find($id);
@@ -195,7 +191,6 @@ class DynamicFormController extends Controller
             default:
                 $item = null;
         }
-
         return response()->json([
             'name' => $item ? $item->name : 'Not Found',
             'id' => $id
