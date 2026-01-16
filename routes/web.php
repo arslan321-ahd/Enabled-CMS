@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DynamicFormController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\FormBuilderController;
+use App\Http\Controllers\Admin\LogController;
 use App\Http\Controllers\Admin\TaggingController;
 use App\Http\Controllers\Admin\UseCaseController;
 use App\Http\Controllers\ProfileController;
@@ -90,6 +91,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/use-cases/{use_case}', [UseCaseController::class, 'update'])->name('use-cases.update');
         Route::delete('/use-cases/{use_case}', [UseCaseController::class, 'destroy'])->name('use-cases.destroy');
     });
+    // Logs Routes
+    Route::get('/admin/logs', [LogController::class, 'index'])->name('admin.logs.index');
+    Route::get('/admin/logs/{log}', [LogController::class, 'show'])->name('admin.logs.show');
+    Route::post('/admin/logs/{log}/mark-read', [LogController::class, 'markRead'])->name('admin.logs.markRead');
 });
 // Route::post('/my-form', [DynamicFormController::class, 'submit'])->name('forms.submit');
 Route::get('/form/{slug}', [DynamicFormController::class, 'showPublic'])->name('form.public');

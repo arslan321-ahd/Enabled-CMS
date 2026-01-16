@@ -6,15 +6,24 @@ class ExportLogFormatter
 {
     public static function format(string $category, array $filters): string
     {
+        // Remove technical filters
+        unset($filters['start_date'], $filters['end_date']);
+
+        // Remove filters that mean "all"
+        $filters = collect($filters)
+            ->reject(fn($value) => $value === 'all' || $value === null || $value === '')
+            ->toArray();
+
+        $categoryName = ucfirst(str_replace('_', ' ', $category));
+
         if (empty($filters)) {
-            return ucfirst(str_replace('_', ' ', $category)) . ' exported without filters';
+            return "{$categoryName} exported";
         }
 
-        $filterText = collect($filters)->map(function ($value, $key) {
-            return "{$key}={$value}";
-        })->implode(', ');
+        $filterText = collect($filters)
+            ->map(fn($value, $key) => "{$key}={$value}")
+            ->implode(', ');
 
-        return ucfirst(str_replace('_', ' ', $category))
-            . " exported with filters: {$filterText}";
+        return "{$categoryName} exported with filters: {$filterText}";
     }
 }

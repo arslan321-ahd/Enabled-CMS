@@ -1,3 +1,8 @@
+ @php
+     $allNotifications = $allNotifications ?? collect([]);
+     $systemLogs = $systemLogs ?? collect([]);
+ @endphp
+
  <div class="topbar d-print-none">
      <div class="container-fluid">
          <nav class="topbar-custom d-flex justify-content-between" id="topbar-custom">
@@ -40,16 +45,14 @@
                          <i class="iconoir-sun-light light-mode"></i>
                      </a>
                  </li>
-
                  <li class="dropdown topbar-item">
                      <a class="nav-link dropdown-toggle arrow-none nav-icon" data-bs-toggle="dropdown" href="#"
                          role="button">
                          <i class="iconoir-bell"></i>
-                         <span class="alert-badge">{{ $notificationCount }}</span>
+                         <span class="alert-badge">{{ $notificationCount }}</span> {{-- total unread notifications --}}
                      </a>
-
                      <div class="dropdown-menu stop dropdown-menu-end dropdown-lg py-0">
-
+                         <!-- Header -->
                          <h5 class="dropdown-item-text m-0 py-3 d-flex justify-content-between align-items-center">
                              Notifications
                              <a href="#" class="badge text-body-tertiary badge-pill">
@@ -57,97 +60,88 @@
                              </a>
                          </h5>
 
+                         <!-- Tabs -->
                          <ul class="nav nav-tabs nav-tabs-custom nav-success nav-justified mb-1" role="tablist">
                              <li class="nav-item">
                                  <a class="nav-link mx-0 active" data-bs-toggle="tab" href="#All">
                                      All
                                      <span class="badge bg-primary-subtle text-primary badge-pill ms-1">
-                                         {{ $notificationCount }}
+                                         {{ $allNotifications->count() }} {{-- total non-system notifications --}}
                                      </span>
                                  </a>
                              </li>
                              <li class="nav-item">
                                  <a class="nav-link mx-0" data-bs-toggle="tab" href="#SystemLogs">
                                      System Logs
+                                     <span class="badge bg-danger-subtle text-danger badge-pill ms-1">
+                                         {{ $systemLogs->count() }} {{-- unread system logs --}}
+                                     </span>
                                  </a>
                              </li>
                          </ul>
 
+                         <!-- Tab Content -->
                          <div class="ms-0" style="max-height:230px;" data-simplebar>
                              <div class="tab-content">
 
-                                 {{-- ================= ALL NOTIFICATIONS ================= --}}
-                                 <div class="tab-pane fade show active" id="All">
-                                     @forelse($allNotifications as $log)
-                                         <a href="#" class="dropdown-item py-3">
-                                             <small class="float-end text-muted ps-2">
-                                                 {{ $log->created_at->diffForHumans() }}
-                                             </small>
+                                 <!-- All Notifications (non-system logs) -->
+                                 <div class="tab-pane fade show active" id="All" role="tabpanel">
+                                     <ul class="list-group list-group-flush">
+                                         @forelse($allNotifications as $log)
+                                             <li class="list-group-item d-flex justify-content-between align-items-start 
+                                {{ !$log->is_read ? 'bg-warning-subtle' : '' }}"
+                                                 style="cursor:pointer"
+                                                 onclick="window.location='{{ route('admin.logs.show', $log->id) }}'">
 
-                                             <div class="d-flex align-items-center">
-                                                 <div
-                                                     class="flex-shrink-0 bg-primary-subtle text-primary thumb-md rounded-circle">
-                                                     <i class="iconoir-bell fs-4"></i>
+                                                 <div class="ms-2 me-auto">
+                                                     <div class="fw-bold">{{ $log->title }}</div>
+                                                     <small
+                                                         class="text-muted">{{ Str::limit($log->description, 50) }}</small>
                                                  </div>
 
-                                                 <div class="flex-grow-1 ms-2 text-truncate">
-                                                     <h6 class="my-0 fw-normal text-dark fs-13">
-                                                         {{ $log->title }}
-                                                     </h6>
-                                                     <small class="text-muted mb-0">
-                                                         {{ $log->description }}
-                                                     </small>
-                                                 </div>
-                                             </div>
-                                         </a>
-                                     @empty
-                                         <div class="text-center py-3 text-muted">
-                                             No notifications found
-                                         </div>
-                                     @endforelse
+                                                 @if (!$log->is_read)
+                                                     <span class="badge bg-warning rounded-pill">Unread</span>
+                                                 @endif
+                                             </li>
+                                         @empty
+                                             <li class="list-group-item text-center text-muted">No notifications</li>
+                                         @endforelse
+                                     </ul>
                                  </div>
 
-                                 {{-- ================= SYSTEM LOGS ONLY ================= --}}
-                                 <div class="tab-pane fade" id="SystemLogs">
-                                     @forelse($systemLogs as $log)
-                                         <a href="#" class="dropdown-item py-3">
-                                             <small class="float-end text-muted ps-2">
-                                                 {{ $log->created_at->diffForHumans() }}
-                                             </small>
+                                 <!-- System Logs (login/logout, unread only) -->
+                                 <div class="tab-pane fade" id="SystemLogs" role="tabpanel">
+                                     <ul class="list-group list-group-flush">
+                                         @forelse($systemLogs as $log)
+                                             <li class="list-group-item d-flex justify-content-between align-items-start bg-danger-subtle"
+                                                 style="cursor:pointer"
+                                                 onclick="window.location='{{ route('admin.logs.show', $log->id) }}'">
 
-                                             <div class="d-flex align-items-center">
-                                                 <div
-                                                     class="flex-shrink-0 bg-warning-subtle text-warning thumb-md rounded-circle">
-                                                     <i class="iconoir-user fs-4"></i>
+                                                 <div class="ms-2 me-auto">
+                                                     <div class="fw-bold">{{ $log->title }}</div>
+                                                     <small
+                                                         class="text-muted">{{ Str::limit($log->description, 50) }}</small>
                                                  </div>
 
-                                                 <div class="flex-grow-1 ms-2 text-truncate">
-                                                     <h6 class="my-0 fw-normal text-dark fs-13">
-                                                         {{ $log->title }}
-                                                     </h6>
-                                                     <small class="text-muted mb-0">
-                                                         {{ $log->description }}
-                                                     </small>
-                                                 </div>
-                                             </div>
-                                         </a>
-                                     @empty
-                                         <div class="text-center py-3 text-muted">
-                                             No system logs found
-                                         </div>
-                                     @endforelse
+                                                 <span class="badge bg-danger rounded-pill">Unread</span>
+                                             </li>
+                                         @empty
+                                             <li class="list-group-item text-center text-muted">No unread system logs
+                                             </li>
+                                         @endforelse
+                                     </ul>
                                  </div>
 
                              </div>
                          </div>
 
-                         <a href="#" class="dropdown-item text-center text-dark fs-13 py-2">
+                         <!-- View All -->
+                         <a href="{{ route('admin.logs.index') }}"
+                             class="dropdown-item text-center text-dark fs-13 py-2">
                              View All <i class="fi-arrow-right"></i>
                          </a>
                      </div>
                  </li>
-
-
                  <li class="dropdown topbar-item">
                      <a class="nav-link dropdown-toggle arrow-none nav-icon" data-bs-toggle="dropdown" href="#"
                          role="button" aria-haspopup="false" aria-expanded="false" data-bs-offset="0,19">

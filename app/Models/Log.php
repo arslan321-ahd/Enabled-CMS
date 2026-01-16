@@ -12,7 +12,8 @@ class Log extends Model
         'action',
         'loggable_type',
         'loggable_id',
-        'user_id'
+        'user_id',
+        'is_read'
     ];
 
     public function user()

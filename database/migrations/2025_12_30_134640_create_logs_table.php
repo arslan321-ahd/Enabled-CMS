@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('loggable_type');
             $table->unsignedBigInteger('loggable_id')->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
+            $table->boolean('is_read')->default(false);
             $table->timestamps();
             $table->index(['loggable_type', 'loggable_id']);
         });
