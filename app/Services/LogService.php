@@ -11,15 +11,15 @@ class LogService
         string $title,
         string $description,
         string $action,
-        $model
+        $model = null
     ) {
         Log::create([
-            'title'          => $title,
-            'description'    => $description,
-            'action'         => $action,
-            'loggable_type'  => get_class($model),
-            'loggable_id'    => $model->id,
-            'user_id'        => Auth::id()
+            'title'         => $title,
+            'description'   => $description,
+            'action'        => $action,
+            'loggable_type' => $model ? get_class($model) : 'excel_export',
+            'loggable_id'   => $model?->id,
+            'user_id'       => Auth::id(),
         ]);
     }
 }

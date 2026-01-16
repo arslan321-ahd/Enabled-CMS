@@ -17,7 +17,7 @@ return new class extends Migration
             $table->text('description');
             $table->string('action');
             $table->string('loggable_type');
-            $table->unsignedBigInteger('loggable_id');
+            $table->unsignedBigInteger('loggable_id')->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
             $table->timestamps();
             $table->index(['loggable_type', 'loggable_id']);
