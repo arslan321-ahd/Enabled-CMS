@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\TaggingController;
 use App\Http\Controllers\Admin\UseCaseController;
 use App\Http\Controllers\ProfileController;
 use App\Models\Announcement;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -95,6 +96,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/logs', [LogController::class, 'index'])->name('admin.logs.index');
     Route::get('/admin/logs/{log}', [LogController::class, 'show'])->name('admin.logs.show');
     Route::post('/admin/logs/{log}/mark-read', [LogController::class, 'markRead'])->name('admin.logs.markRead');
+    Route::post('/admin/logs/mark-all-read', [LogController::class, 'markAllRead'])->name('admin.logs.markAllRead');
+
+    Route::get('/optimize-clear', function () {
+        Artisan::call('optimize:clear');
+        return 'Optimize clear completed!';
+    });
+    Route::get('/create-symlink', function () {
+        Artisan::call('storage:link');
+        return 'Symbolic link created successfully!';
+    });
 });
 // Route::post('/my-form', [DynamicFormController::class, 'submit'])->name('forms.submit');
 Route::get('/form/{slug}', [DynamicFormController::class, 'showPublic'])->name('form.public');

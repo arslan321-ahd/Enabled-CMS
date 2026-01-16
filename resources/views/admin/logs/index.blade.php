@@ -34,7 +34,7 @@
 
                             <tbody>
                                 @forelse ($logs as $index => $log)
-                                    <tr class="{{ !$log->is_read ? 'table-danger' : '' }}" style="cursor:pointer"
+                                    <tr class="{{ !$log->is_read ? 'bg-info-subtle' : '' }}" style="cursor:pointer"
                                         onclick="window.location='{{ route('admin.logs.show', $log->id) }}'">
                                         <td>{{ $index + 1 }}</td>
 

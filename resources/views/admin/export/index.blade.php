@@ -16,14 +16,16 @@
     </div>
 
     <div class="row justify-content-center">
-        <div class="col-md-10">
+        <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Export Data to Excel</h4>
-                    <p class="text-muted mb-0">Select category and apply filters</p>
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h4 class="card-title">Export</h4>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="card-body">
+                <div class="card-body pt-0">
                     <form method="POST" action="{{ route('admin.export.download') }}" id="exportForm">
                         @csrf
 
@@ -39,19 +41,6 @@
                                 <option value="customer_list">Customer List (Form Submissions)</option>
                             </select>
                         </div>
-
-                        {{-- DATE FILTER --}}
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label">Start Date</label>
-                                <input type="date" name="start_date" class="form-control">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">End Date</label>
-                                <input type="date" name="end_date" class="form-control">
-                            </div>
-                        </div>
-
                         {{-- BRANDS FILTER --}}
                         <div id="brandsFilters" class="category-filters">
                             <label class="form-label">Brand Status</label>
@@ -109,11 +98,23 @@
                                 </div>
                             </div>
                         </div>
-
+                        {{-- DATE FILTER --}}
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" name="start_date" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">End Date</label>
+                                <input type="date" name="end_date" class="form-control">
+                            </div>
+                        </div>
                         {{-- EXPORT BUTTON --}}
-                        <button type="submit" class="btn btn-success w-100 mt-4">
-                            <i class="fa-solid fa-file-excel me-2"></i> Export Excel
-                        </button>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa-solid fa-file-excel me-2"></i> Export Excel
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -137,11 +138,7 @@
 <style>
     .category-filters {
         display: none;
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 6px;
         margin-bottom: 20px;
-        border: 1px solid #e9ecef;
     }
 </style>
 @endsection

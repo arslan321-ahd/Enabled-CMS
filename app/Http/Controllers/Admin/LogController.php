@@ -31,4 +31,13 @@ class LogController extends Controller
 
         return response()->json(['success' => true]);
     }
+    public function markAllRead()
+    {
+        Log::where('is_read', false)->update(['is_read' => true]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'All notifications marked as read'
+        ]);
+    }
 }

@@ -55,11 +55,14 @@
                          <!-- Header -->
                          <h5 class="dropdown-item-text m-0 py-3 d-flex justify-content-between align-items-center">
                              Notifications
-                             <a href="#" class="badge text-body-tertiary badge-pill">
-                                 <i class="iconoir-plus-circle fs-4"></i>
+                             <a href="javascript:void(0);"
+                                 class="badge text-body-tertiary badge-pill d-flex align-items-center gap-1"
+                                 id="markAllReadBtn" title="Mark all as read">
+                                 <i class="iconoir-check-circle fs-4"></i>
+                                 <span class="fw-medium">Read All</span>
                              </a>
-                         </h5>
 
+                         </h5>
                          <!-- Tabs -->
                          <ul class="nav nav-tabs nav-tabs-custom nav-success nav-justified mb-1" role="tablist">
                              <li class="nav-item">

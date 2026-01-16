@@ -46,32 +46,23 @@ class AppServiceProvider extends ServiceProvider
         FormField::observe(FormFieldObserver::class);
         FormSubmission::observe(FormSubmissionObserver::class);
         View::composer('*', function ($view) {
-
             $systemActions = ['user_login', 'user_logout'];
-
-            // All non-system notifications
             $allNotifications = Log::whereNotIn('action', $systemActions)
                 ->latest()
                 ->limit(15)
                 ->get();
-
-            // Unread system logs
             $systemLogs = Log::whereIn('action', $systemActions)
                 ->where('is_read', false)
                 ->latest()
                 ->limit(10)
                 ->get();
-
-            // Total unread count (system + non-system)
             $totalUnread = Log::where('is_read', false)->count();
-
             $view->with([
                 'allNotifications' => $allNotifications,
                 'systemLogs' => $systemLogs,
-                'notificationCount' => $totalUnread, // total unread for the bell icon
+                'notificationCount' => $totalUnread,
             ]);
         });
-
         Event::listen(Login::class, function ($event) {
             Log::create([
                 'title' => 'User Logged In',

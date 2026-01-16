@@ -14,6 +14,7 @@ class FormSubmissionMail extends Mailable
     public $recipientType;
     public function __construct($form, $fields, $recipientType = 'admin')
     {
+
         $this->form = $form;
         $this->fields = $fields;
         $this->recipientType = $recipientType;
